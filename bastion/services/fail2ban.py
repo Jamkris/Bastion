@@ -1,4 +1,4 @@
-"""fail2ban-client 텍스트 출력 파서 (순수 함수)."""
+"""Parsers for fail2ban-client text output (pure functions)."""
 
 import re
 
@@ -22,7 +22,7 @@ def _int(pattern: re.Pattern, raw: str, default: int = 0) -> int:
 
 
 def parse_jail_list(raw: str) -> tuple[str, ...]:
-    """`fail2ban-client status` 출력에서 jail 이름 목록을 추출."""
+    """Extract jail names from `fail2ban-client status` output."""
     m = _JAIL_LIST.search(raw)
     if not m:
         return ()
@@ -30,10 +30,10 @@ def parse_jail_list(raw: str) -> tuple[str, ...]:
 
 
 def parse_jail_status(raw: str) -> JailStatus:
-    """`fail2ban-client status <jail>` 출력을 JailStatus로 변환."""
+    """Turn `fail2ban-client status <jail>` output into a JailStatus."""
     name_m = _JAIL_NAME.search(raw)
     if not name_m:
-        raise ValueError("fail2ban jail status를 파싱할 수 없습니다 (헤더 없음)")
+        raise ValueError("cannot parse fail2ban jail status (no header)")
 
     file_m = _FILE_LIST.search(raw)
     files = tuple(file_m.group(1).split()) if file_m else ()

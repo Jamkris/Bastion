@@ -1,4 +1,4 @@
-"""ss 실행 → 원시 텍스트."""
+"""Run ss -> raw text."""
 
 from bastion import demo_data
 from bastion.config import settings

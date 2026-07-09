@@ -1,12 +1,12 @@
-"""인증 로그에서 공격(로그인 실패) IP를 집계 (순수 함수)."""
+"""Aggregate attacking (failed-login) IPs from the auth log (pure function)."""
 
 import re
 from collections import Counter
 
 from bastion.models import AttackerStat
 
-# sshd 실패 로그의 대표 패턴들. "Failed password ... from <ip>",
-# "Invalid user ... from <ip>", "... authentication failure ... rhost=<ip>"
+# Common sshd failure patterns: "Failed password ... from <ip>",
+# "Invalid user ... from <ip>", "... authentication failure ... rhost=<ip>".
 _IP = r"(\d{1,3}(?:\.\d{1,3}){3})"
 _PATTERNS = [
     re.compile(rf"Failed password for .* from {_IP}"),

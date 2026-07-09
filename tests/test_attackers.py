@@ -18,4 +18,4 @@ def test_invalid_user_and_pam_counted(fixture):
 def test_accepted_login_not_counted(fixture):
     stats = parse_attackers(fixture("auth.log"))
     ips = {s.ip for s in stats}
-    assert "192.168.45.10" not in ips  # Accepted → 공격 아님
+    assert "192.168.45.10" not in ips  # accepted -> not an attack

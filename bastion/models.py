@@ -1,4 +1,4 @@
-"""불변 데이터 모델. 파서(services)가 원시 출력을 이 타입으로 변환한다."""
+"""Immutable data models. Parsers (services) turn raw output into these types."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""fail2ban-client 실행 → 원시 텍스트."""
+"""Run fail2ban-client -> raw text."""
 
 from bastion import demo_data
 from bastion.config import settings

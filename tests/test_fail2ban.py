@@ -20,7 +20,7 @@ def test_parse_jail_status_banned_ips(fixture):
     status = parse_jail_status(fixture("fail2ban_status_sshd.txt"))
     assert status.banned_ips[0] == "1.222.42.237"
     assert "102.88.137.80" in status.banned_ips
-    # 픽스처는 30개로 트리밍됨 (실서버는 941개)
+    # Fixture is trimmed to 30 IPs (real server had 941).
     assert len(status.banned_ips) == 30
 
 
@@ -28,4 +28,4 @@ def test_parse_jail_status_rejects_garbage():
     import pytest
 
     with pytest.raises(ValueError):
-        parse_jail_status("완전히 관계없는 텍스트")
+        parse_jail_status("completely unrelated text")

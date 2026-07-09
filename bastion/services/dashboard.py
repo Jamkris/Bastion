@@ -1,6 +1,6 @@
-"""수집기 + 파서 + GeoIP를 묶어 화면용 데이터를 만든다.
-각 함수는 (데이터, 에러메시지) 튜플을 반환해 한 패널이 실패해도
-나머지 패널은 정상 렌더되도록 한다 (개발 환경엔 nft/fail2ban이 없으므로)."""
+"""Combine collectors + parsers + GeoIP into view-ready data.
+Each function returns a (data, error) tuple so one failing panel does not
+break the others (dev environments lack nft/fail2ban)."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def _safe(fn):
         return fn(), None
     except CommandError as e:
         return None, str(e)
-    except Exception as e:  # noqa: BLE001 — 패널 격리가 목적
+    except Exception as e:  # noqa: BLE001 — panel isolation is intentional
         return None, f"{type(e).__name__}: {e}"
 
 

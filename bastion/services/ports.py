@@ -1,10 +1,10 @@
-"""`ss -tlnp` 출력 파서 (순수 함수)."""
+"""Parser for `ss -tlnp` output (pure function)."""
 
 import re
 
 from bastion.models import OpenPort
 
-# users:(("node /home/jamk",pid=895,fd=20))  → 이름, pid
+# users:(("node /home/jamk",pid=895,fd=20))  -> name, pid
 _PROC = re.compile(r'users:\(\("([^"]+)",pid=(\d+)')
 
 
@@ -18,7 +18,7 @@ def parse_listening_ports(raw: str) -> list[OpenPort]:
         if len(parts) < 5 or parts[0] != "LISTEN":
             continue
 
-        # IPv6는 주소에 콜론이 많으므로 오른쪽에서 한 번만 분리
+        # IPv6 addresses contain colons, so split only on the last one.
         addr, _, port = parts[3].rpartition(":")
         if not port.isdigit():
             continue

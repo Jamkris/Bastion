@@ -1,4 +1,4 @@
-"""IP → 국가 코드 보강. GeoLite2 .mmdb가 있으면 사용, 없으면 None."""
+"""IP -> country code enrichment. Uses GeoLite2 .mmdb if present, else None."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ try:
     import geoip2.database  # type: ignore
 
     _HAS_GEOIP = True
-except ImportError:  # geoip2 미설치 환경에서도 앱은 동작해야 함
+except ImportError:  # the app must still work without geoip2 installed
     _HAS_GEOIP = False
 
 

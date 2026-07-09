@@ -6,6 +6,7 @@
     {{ t("fw_sets") }} {{ ruleset.sets|length if ruleset else 0 }}
   </span>
 </h2>
+{% if not error and ruleset %}<div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>{% endif %}
 <div class="body">
   {% if error %}
     <div class="err">{{ error }}</div>

@@ -1,5 +1,5 @@
-"""데모 모드용 샘플 출력. BASTION_DEMO=true면 collectors가 실제 명령 대신
-이 데이터를 반환한다. 리눅스 명령이 없는 개발 환경(맥) 미리보기 + 공개 데모용."""
+"""Sample output for demo mode. When BASTION_DEMO=true, collectors return this
+instead of running real commands. Useful for command-less dev (macOS) and a public demo."""
 
 FAIL2BAN_STATUS = """Status
 |- Number of jail:      1

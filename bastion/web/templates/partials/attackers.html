@@ -2,6 +2,7 @@
   {{ t("panel_attackers") }}
   <span class="badge num">{{ attackers|length }}</span>
 </h2>
+{% if not error %}<div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>{% endif %}
 <div class="body">
   {% if error %}
     <div class="err">{{ error }}</div>

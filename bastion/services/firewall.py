@@ -1,8 +1,8 @@
-"""`nft -j list ruleset` (JSON) 파서 (순수 함수).
+"""Parser for `nft -j list ruleset` (JSON) output (pure function).
 
-nftables JSON 스키마: {"nftables": [ {"metainfo":{...}}, {"table":{...}},
+nftables JSON schema: {"nftables": [ {"metainfo":{...}}, {"table":{...}},
 {"chain":{...}}, {"rule":{...}}, {"set":{...}}, ... ]}
-각 원소는 키가 하나인 dict.
+Each element is a single-key dict.
 """
 
 import json
@@ -11,7 +11,7 @@ from bastion.models import FirewallChain, FirewallRule, FirewallRuleset, Firewal
 
 
 def _set_elements(elem) -> tuple[str, ...]:
-    # elem 항목은 문자열이거나 dict(범위/prefix 등)일 수 있다.
+    # Elements may be strings or dicts (ranges/prefixes).
     if not elem:
         return ()
     return tuple(e if isinstance(e, str) else json.dumps(e, ensure_ascii=False) for e in elem)

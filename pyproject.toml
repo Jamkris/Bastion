@@ -1,7 +1,7 @@
 [project]
 name = "bastion"
 version = "1.0.0"
-description = "셀프호스팅 fail2ban + nftables 관측 대시보드"
+description = "Self-hosted fail2ban + nftables observability dashboard"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.110",

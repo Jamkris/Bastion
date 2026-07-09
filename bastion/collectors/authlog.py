@@ -1,4 +1,4 @@
-"""인증 로그 원시 텍스트. 파일(/var/log/auth.log) 우선, 없으면 journald."""
+"""Auth log raw text. Prefers the file (/var/log/auth.log), falls back to journald."""
 
 import os
 
@@ -10,7 +10,7 @@ DEFAULT_AUTH_LOG = os.environ.get("BASTION_AUTH_LOG", "/var/log/auth.log")
 
 
 def raw_auth_log(path: str = DEFAULT_AUTH_LOG, max_bytes: int = 5_000_000) -> str:
-    """auth.log 파일을 읽어 반환. 파일이 없으면 journalctl로 폴백."""
+    """Read the auth log. Fall back to journalctl if the file is absent."""
     if settings.demo:
         return demo_data.AUTH_LOG
     if os.path.exists(path):

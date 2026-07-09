@@ -1,3 +1,3 @@
-"""Bastion — 셀프호스팅 fail2ban + nftables 관측 대시보드."""
+"""Bastion — self-hosted fail2ban + nftables observability dashboard."""
 
 __version__ = "1.0.0"

@@ -10,6 +10,8 @@ TRANSLATIONS = {
     "en": {
         "auto_refresh": "Auto-refresh every 30s",
         "loading": "Loading…",
+        "filter": "Filter…",
+        "matched": "matched",
         "panel_banned": "Banned IPs",
         "panel_attackers": "Top Attackers",
         "panel_ports": "Open Ports",
@@ -34,6 +36,8 @@ TRANSLATIONS = {
     "ko": {
         "auto_refresh": "30초마다 자동 갱신",
         "loading": "불러오는 중…",
+        "filter": "검색…",
+        "matched": "일치",
         "panel_banned": "차단된 IP",
         "panel_attackers": "자주 공격하는 IP",
         "panel_ports": "열린 포트",

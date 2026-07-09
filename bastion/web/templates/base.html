@@ -39,6 +39,12 @@
     .lang a.active { color: #e6edf3; background: #21262d; }
     .lang .sep { color: #30363d; }
     .refresh { color: #7d8590; font-size: 12px; }
+    .filterbar { padding: 8px 12px; border-bottom: 1px solid #21262d; background: #12161c; }
+    .filterbar input {
+      width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+      color: #e6edf3; padding: 6px 10px; font-size: 13px;
+    }
+    .filterbar input:focus { outline: none; border-color: #388bfd; }
   </style>
 </head>
 <body>
@@ -55,5 +61,40 @@
   <main>
     {% block content %}{% endblock %}
   </main>
+
+  <script>
+    // Client-side row filtering that survives HTMX panel swaps.
+    // Filter text is stored per panel and re-applied after each 30s refresh.
+    (function () {
+      const store = {};
+
+      function apply(key, panel) {
+        const q = (store[key] || "").toLowerCase();
+        const table = panel.querySelector("table");
+        if (!table) return;
+        table.querySelectorAll("tbody tr").forEach(function (tr) {
+          tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? "" : "none";
+        });
+      }
+
+      document.addEventListener("input", function (e) {
+        const input = e.target.closest(".filter");
+        if (!input) return;
+        const panel = input.closest("[data-panel]");
+        const key = panel.getAttribute("data-panel");
+        store[key] = input.value;
+        apply(key, panel);
+      });
+
+      document.body.addEventListener("htmx:afterSwap", function (e) {
+        const panel = e.target.closest("[data-panel]");
+        if (!panel) return;
+        const key = panel.getAttribute("data-panel");
+        const input = panel.querySelector(".filter");
+        if (input && store[key] != null) input.value = store[key];
+        apply(key, panel);
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-"""nft 실행 → 원시 JSON 텍스트."""
+"""Run nft -> raw JSON text."""
 
 from bastion import demo_data
 from bastion.config import settings

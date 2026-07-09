@@ -1,27 +1,27 @@
 services:
   bastion:
     build: .
-    # image: ghcr.io/jamkris/bastion:latest   # 배포 시
+    # image: ghcr.io/jamkris/bastion:latest   # for deployment
     container_name: bastion
     restart: unless-stopped
 
-    # 호스트 방화벽/포트를 그대로 보려면 호스트 네트워크 + NET_ADMIN 필요.
+    # Host network + NET_ADMIN are required to read the host firewall/ports.
     network_mode: host
     cap_add:
       - NET_ADMIN
 
     environment:
-      BASTION_SUDO: "false"          # 컨테이너 내부 root라 sudo 불필요
+      BASTION_SUDO: "false"          # container runs as root, no sudo needed
       # BASTION_GEOIP_DB: /geoip/GeoLite2-Country.mmdb
-      # BASTION_JAILS: sshd          # 비우면 자동 발견
+      # BASTION_JAILS: sshd          # empty -> auto-discover
 
     volumes:
-      # fail2ban 소켓 (jail 상태 조회)
+      # fail2ban socket (jail status)
       - /var/run/fail2ban/fail2ban.sock:/var/run/fail2ban/fail2ban.sock
-      # 인증 로그 (공격 IP 집계) — 읽기 전용
+      # auth log (attacker aggregation) — read-only
       - /var/log:/var/log:ro
-      # GeoIP DB (선택)
+      # GeoIP DB (optional)
       # - /path/to/geoip:/geoip:ro
 
-    # network_mode host 라 포트 매핑 대신 앱이 직접 8009로 리슨.
-    # Cloudflare Access / wg-easy 뒤에 숨길 것 — 인터넷 직노출 금지.
+    # With host networking the app listens directly on :8009 (no port mapping).
+    # Keep it behind Cloudflare Access / wg-easy — never expose to the internet.

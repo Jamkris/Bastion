@@ -1,68 +1,82 @@
 # 🛡 Bastion
 
-셀프호스팅 단일 서버용 **fail2ban + nftables 관측 대시보드**. 무겁고 클라우드에 의존하는 도구 없이, 컨테이너 하나로 방화벽 상태를 웹에서 본다.
+A lightweight **fail2ban + nftables observability dashboard** for a single self-hosted server. See your firewall state in the browser — no heavy, cloud-dependent tooling, just one container.
 
 ## Features (v1.0 — read-only)
 
-- **차단된 IP** — fail2ban jail별 밴 목록 + 국가(GeoIP)
-- **자주 공격하는 IP** — auth.log/journald 로그인 실패 집계 top N
-- **열린 포트** — `ss -tlnp` 리스닝 포트 + 프로세스
-- **방화벽 규칙** — `nft -j list ruleset` (nftables) 체인·규칙·셋
+- **Banned IPs** — per-jail fail2ban ban list + country (GeoIP)
+- **Top attackers** — failed-login aggregation from auth.log / journald
+- **Open ports** — listening ports from `ss -tlnp` with owning process
+- **Firewall rules** — chains, rules and sets from `nft -j list ruleset` (nftables)
+- Client-side search/filter on every panel; live 30s refresh via HTMX
 
-> v0.2에서 허용/차단 IP 조작, 밴/언밴 버튼을 권한 분리 설계로 추가 예정.
+> v0.2 will add allow/ban actions and ban/unban buttons behind a privilege-separated design.
 
-## 아키텍처
+## Architecture
 
 ```
-collectors/  명령 실행 → 원시 텍스트   (fail2ban-client, nft, ss, auth.log)
-services/    원시 → 파싱 → dataclass   (순수 함수, 100% 테스트 대상)
+collectors/  run commands -> raw text     (fail2ban-client, nft, ss, auth.log)
+services/    raw -> parse -> dataclass     (pure functions, fully tested)
 web/         FastAPI + HTMX / JSON API
 ```
 
-로직이 전부 `services/`에 있어 CLI·API·HTMX가 같은 코드를 재사용한다.
+All logic lives in `services/`, so the CLI, API and HTMX layers reuse the same code.
 
-## 설치 — Docker (권장)
+## Install — Docker (recommended)
 
 ```bash
-cp .env.example .env       # 필요 시 편집
+cp .env.example .env       # edit if needed
 docker compose up -d --build
 ```
 
-호스트 방화벽을 읽기 위해 `network_mode: host` + `cap_add: NET_ADMIN` + fail2ban 소켓/`/var/log` 마운트를 사용한다 (compose에 포함). 앱은 `:8009`로 리슨한다.
+Reading the host firewall requires `network_mode: host` + `cap_add: NET_ADMIN` plus mounts for the fail2ban socket and `/var/log` (included in the compose file). The app listens on `:8009`.
 
-> **보안**: 관리 도구이므로 인터넷에 직접 노출하지 말 것. Cloudflare Access나 VPN(wg-easy) 뒤에 둘 것.
+> **Security**: this is an admin tool — never expose it to the internet. Put it behind Cloudflare Access or a VPN (wg-easy).
 
-## 설치 — systemd (베어메탈)
+## Install — systemd (bare metal)
 
-같은 코드가 컨테이너 없이도 동작한다.
+The same code runs without a container.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 BASTION_SUDO=true .venv/bin/uvicorn bastion.web.app:app --host 127.0.0.1 --port 8009
 ```
 
-`BASTION_SUDO=true`면 명령에 `sudo`를 붙인다. sudoers에 아래만 NOPASSWD 화이트리스트로 허용:
+`BASTION_SUDO=true` prefixes commands with `sudo`. Add a NOPASSWD allowlist in sudoers:
 
 ```
 bastion ALL=(root) NOPASSWD: /usr/sbin/nft -j list ruleset, /usr/bin/fail2ban-client status *
 ```
 
-## 설정 (환경변수)
+## Demo mode
 
-| 변수 | 기본값 | 설명 |
+Set `BASTION_DEMO=true` to serve sample data instead of running commands — useful for previewing the UI on a machine without the Linux CLIs (e.g. macOS) and for a public demo.
+
+```bash
+BASTION_DEMO=true .venv/bin/uvicorn bastion.web.app:app --reload --port 8009
+```
+
+## Configuration (environment variables)
+
+| Variable | Default | Description |
 |---|---|---|
-| `BASTION_SUDO` | `false` | 명령에 sudo 프리픽스 |
-| `BASTION_JAILS` | (자동) | 조회할 jail, 쉼표 구분 |
-| `BASTION_GEOIP_DB` | (없음) | GeoLite2 .mmdb 경로 |
-| `BASTION_AUTH_LOG` | `/var/log/auth.log` | 인증 로그 경로 |
+| `BASTION_SUDO` | `false` | Prefix commands with sudo |
+| `BASTION_DEMO` | `false` | Serve sample data |
+| `BASTION_JAILS` | (auto) | Jails to query, comma-separated |
+| `BASTION_GEOIP_DB` | (none) | Path to a GeoLite2 .mmdb |
+| `BASTION_AUTH_LOG` | `/var/log/auth.log` | Auth log path |
 
-## 개발
+## Internationalization
+
+English is the default UI language; Korean is available. Switch with the `EN`/`KO` toggle in the header (persisted via cookie).
+
+## Development
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest httpx
-.venv/bin/python -m pytest      # 파서 테스트 (실서버 없이 픽스처로)
+.venv/bin/python -m pytest      # parser tests run against fixtures, no live server
 ```
 
-## 라이선스
+## License
 
 MIT

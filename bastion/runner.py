@@ -1,5 +1,5 @@
-"""명령 실행 추상화. 테스트에서는 이 함수를 monkeypatch 하거나
-collectors에 가짜 출력을 주입해 파서를 순수하게 검증한다."""
+"""Command execution wrapper. Tests monkeypatch this or inject fake output
+into collectors so parsers can be verified in isolation."""
 
 from __future__ import annotations
 
@@ -13,11 +13,11 @@ class CommandError(RuntimeError):
         self.cmd = cmd
         self.returncode = returncode
         self.stderr = stderr
-        super().__init__(f"명령 실패({returncode}): {' '.join(cmd)}\n{stderr.strip()}")
+        super().__init__(f"command failed ({returncode}): {' '.join(cmd)}\n{stderr.strip()}")
 
 
 def run(cmd: list[str], timeout: int | None = None) -> str:
-    """cmd를 실행하고 stdout(str)을 반환. 실패 시 CommandError."""
+    """Run cmd and return stdout. Raise CommandError on non-zero exit."""
     full = list(settings.sudo_prefix) + cmd
     proc = subprocess.run(
         full,
