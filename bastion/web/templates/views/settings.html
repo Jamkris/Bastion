@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ t("settings_title") }}{% endblock %}
+{% block content %}
+  {% if saved %}<div class="banner-ok">{{ t("settings_saved") }}</div>{% endif %}
+  {% if test_result == "ok" %}<div class="banner-ok">{{ t("test_sent") }}</div>{% endif %}
+  {% if test_result == "fail" %}<div class="banner-err">{{ t("test_failed") }}</div>{% endif %}
+
+  <div class="settings">
+    <!-- Notifications (ntfy) -->
+    <section class="panel">
+      <h2><span>{{ t("sec_notifications") }}</span></h2>
+      <form class="body" method="post" action="/settings/notifications">
+        <p class="hint">{{ t("sec_notifications_hint") }}</p>
+        <div class="field check">
+          <input type="checkbox" id="n_enabled" name="enabled" {% if n.enabled %}checked{% endif %}>
+          <label for="n_enabled">{{ t("lbl_notify_enabled") }}</label>
+        </div>
+        <div class="field">
+          <label for="n_url">{{ t("lbl_ntfy_url") }}</label>
+          <input type="url" id="n_url" name="ntfy_url" value="{{ n.ntfy_url }}" placeholder="https://ntfy.sh">
+        </div>
+        <div class="field">
+          <label for="n_topic">{{ t("lbl_ntfy_topic") }}</label>
+          <input type="text" id="n_topic" name="ntfy_topic" value="{{ n.ntfy_topic }}" placeholder="bastion-alerts">
+        </div>
+        <div class="field">
+          <label for="n_token">{{ t("lbl_ntfy_token") }} <span class="sub">— {{ t("secret_kept") }}</span></label>
+          <input type="password" id="n_token" name="ntfy_token" value="" placeholder="{% if n.ntfy_token %}••••••••{% endif %}" autocomplete="off">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="n_thresh">{{ t("lbl_ban_spike_threshold") }}</label>
+            <input type="number" id="n_thresh" name="ban_spike_threshold" min="1" value="{{ n.ban_spike_threshold }}">
+          </div>
+          <div class="field">
+            <label for="n_window">{{ t("lbl_ban_spike_window") }}</label>
+            <input type="number" id="n_window" name="ban_spike_window_min" min="1" value="{{ n.ban_spike_window_min }}">
+          </div>
+        </div>
+        <p class="hint">{{ t("hint_ban_spike") }}</p>
+        <div class="formactions">
+          <button type="submit" class="btn btn-primary">{{ t("btn_save") }}</button>
+          <button type="submit" class="btn" formaction="/settings/notifications/test">{{ t("btn_test_notify") }}</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Allowlist (nftables) -->
+    <section class="panel">
+      <h2><span>{{ t("sec_allowlist") }}</span></h2>
+      <form class="body" method="post" action="/settings/allowlist">
+        <p class="hint">{{ t("sec_allowlist_hint") }}</p>
+        <div class="row2">
+          <div class="field">
+            <label for="a_family">{{ t("lbl_family") }}</label>
+            <select id="a_family" name="family">
+              {% for f in ["inet", "ip", "ip6"] %}
+                <option value="{{ f }}" {% if a.family == f %}selected{% endif %}>{{ f }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="a_table">{{ t("lbl_table") }}</label>
+            <input type="text" id="a_table" name="table" value="{{ a.table }}">
+          </div>
+        </div>
+        <div class="field">
+          <label for="a_set">{{ t("lbl_set") }}</label>
+          <input type="text" id="a_set" name="set" value="{{ a.set }}">
+        </div>
+        <div class="formactions">
+          <button type="submit" class="btn btn-primary">{{ t("btn_save") }}</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Login security -->
+    <section class="panel">
+      <h2><span>{{ t("sec_security") }}</span></h2>
+      <form class="body" method="post" action="/settings/security">
+        <p class="hint">{{ t("sec_security_hint") }}</p>
+        <div class="row2">
+          <div class="field">
+            <label for="s_max">{{ t("lbl_rl_max") }}</label>
+            <input type="number" id="s_max" name="rate_limit_max_attempts" min="1" value="{{ s.rate_limit_max_attempts }}">
+          </div>
+          <div class="field">
+            <label for="s_window">{{ t("lbl_rl_window") }}</label>
+            <input type="number" id="s_window" name="rate_limit_window_min" min="1" value="{{ s.rate_limit_window_min }}">
+          </div>
+        </div>
+        <div class="formactions">
+          <button type="submit" class="btn btn-primary">{{ t("btn_save") }}</button>
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}

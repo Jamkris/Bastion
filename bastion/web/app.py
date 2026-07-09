@@ -18,7 +18,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from bastion import __version__, auth, i18n
+from bastion import __version__, auth, i18n, prefs
 from bastion.config import settings
 from bastion.runner import CommandError
 from bastion.services import actions, dashboard, geoip
@@ -160,6 +160,29 @@ async def action_unban(request: Request):
         return HTMLResponse(
             f'<tr><td colspan="5" class="err">{html.escape(str(e))}</td></tr>'
         )
+
+
+# ---------- Settings ----------
+@app.get("/settings", response_class=HTMLResponse)
+def settings_page(request: Request):
+    p = prefs.load()
+    return templates.TemplateResponse(
+        request, "views/settings.html",
+        _ctx(request, _lang(request), active="settings",
+             n=p["notifications"], a=p["allowlist"], s=p["security"],
+             saved=request.query_params.get("saved"),
+             test_result=request.query_params.get("test")),
+    )
+
+
+@app.post("/settings/{section}")
+async def settings_save(request: Request, section: str):
+    form = await request.form()
+    try:
+        prefs.update(section, dict(form))
+    except ValueError:
+        return RedirectResponse("/settings", status_code=303)
+    return RedirectResponse(f"/settings?saved={section}", status_code=303)
 
 
 @app.get("/", response_class=HTMLResponse)

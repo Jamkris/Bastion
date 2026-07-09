@@ -48,6 +48,10 @@ class Settings:
     # Single shared password for the login gate. Empty -> auth disabled (open).
     auth_password: str = os.environ.get("BASTION_AUTH_PASSWORD", "")
 
+    # Directory for runtime state (user preferences, GeoIP DB, etc.).
+    # Mount this as a volume in Docker so settings survive container restarts.
+    data_dir: str = os.environ.get("BASTION_DATA_DIR", "data")
+
     # Command timeout in seconds.
     command_timeout: int = int(os.environ.get("BASTION_CMD_TIMEOUT", "10"))
 

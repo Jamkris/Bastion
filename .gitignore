@@ -4,3 +4,7 @@ __pycache__/
 .env
 *.mmdb
 .pytest_cache/
+
+# Runtime state written by the app (user preferences).
+data/prefs.json
+data/*.tmp

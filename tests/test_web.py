@@ -43,3 +43,18 @@ def test_static_favicon_served():
     r = c.get("/static/favicon.svg")
     assert r.status_code == 200
     assert "<svg" in r.text
+
+
+def test_settings_page_renders_sections():
+    c = TestClient(app)
+    r = c.get("/settings")
+    assert r.status_code == 200
+    assert "Notifications (ntfy)" in r.text
+    assert "Allowlist (nftables)" in r.text
+    assert "Login security" in r.text
+
+
+def test_settings_page_korean():
+    c = TestClient(app)
+    r = c.get("/settings?lang=ko")
+    assert "알림 (ntfy)" in r.text
