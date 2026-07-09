@@ -24,8 +24,13 @@ services:
       - /var/run/fail2ban/fail2ban.sock:/var/run/fail2ban/fail2ban.sock
       # auth log (attacker aggregation) — read-only
       - /var/log:/var/log:ro
+      # persisted user preferences from the Settings page (survives restarts)
+      - bastion_data:/app/data
       # GeoIP DB (optional)
       # - /path/to/geoip:/geoip:ro
 
     # With host networking the app listens directly on :8009 (no port mapping).
     # Keep it behind Cloudflare Access / wg-easy — never expose to the internet.
+
+volumes:
+  bastion_data:
