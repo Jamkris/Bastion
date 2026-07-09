@@ -29,3 +29,17 @@ def test_lang_switch_back_to_english():
 def test_healthz_public():
     c = TestClient(app)
     assert c.get("/healthz").status_code == 200
+
+
+def test_favicon_served():
+    c = TestClient(app)
+    r = c.get("/favicon.ico")
+    assert r.status_code == 200
+    assert "svg" in r.headers.get("content-type", "")
+
+
+def test_static_favicon_served():
+    c = TestClient(app)
+    r = c.get("/static/favicon.svg")
+    assert r.status_code == 200
+    assert "<svg" in r.text

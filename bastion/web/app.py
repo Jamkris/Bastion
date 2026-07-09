@@ -14,7 +14,8 @@ import os
 from urllib.parse import quote
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from bastion import __version__, auth, i18n
@@ -26,14 +27,16 @@ from bastion.util import flag_emoji, port_scope
 log = logging.getLogger("bastion")
 
 _TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
+_STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 templates = Jinja2Templates(directory=_TEMPLATE_DIR)
 templates.env.globals["flag"] = flag_emoji
 templates.env.globals["scope"] = port_scope
 
 app = FastAPI(title="Bastion", version=__version__)
+app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 
 # Paths reachable without authentication.
-_PUBLIC_PATHS = {"/login", "/logout", "/healthz"}
+_PUBLIC_PATHS = {"/login", "/logout", "/healthz", "/favicon.ico"}
 
 if not settings.auth_password:
     log.warning("BASTION_AUTH_PASSWORD is not set — the dashboard is OPEN (no login).")
@@ -43,7 +46,7 @@ if not settings.auth_password:
 async def auth_gate(request: Request, call_next):
     password = settings.auth_password
     path = request.url.path
-    if not password or path in _PUBLIC_PATHS:
+    if not password or path in _PUBLIC_PATHS or path.startswith("/static/"):
         return await call_next(request)
     if auth.is_authenticated(request.cookies.get(auth.COOKIE_NAME), password):
         return await call_next(request)
@@ -266,6 +269,11 @@ def api_ports():
 def api_attackers():
     data, error = dashboard.top_attackers()
     return {"data": [a.__dict__ for a in (data or [])], "error": error}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(os.path.join(_STATIC_DIR, "favicon.svg"), media_type="image/svg+xml")
 
 
 @app.get("/healthz")
