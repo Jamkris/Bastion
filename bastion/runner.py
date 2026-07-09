@@ -17,14 +17,18 @@ class CommandError(RuntimeError):
 
 
 def run(cmd: list[str], timeout: int | None = None) -> str:
-    """Run cmd and return stdout. Raise CommandError on non-zero exit."""
+    """Run cmd and return stdout. Raise CommandError on non-zero exit or a
+    missing binary, so callers only ever need to handle CommandError."""
     full = list(settings.sudo_prefix) + cmd
-    proc = subprocess.run(
-        full,
-        capture_output=True,
-        text=True,
-        timeout=timeout or settings.command_timeout,
-    )
+    try:
+        proc = subprocess.run(
+            full,
+            capture_output=True,
+            text=True,
+            timeout=timeout or settings.command_timeout,
+        )
+    except FileNotFoundError as e:
+        raise CommandError(full, 127, f"command not found: {e}") from e
     if proc.returncode != 0:
         raise CommandError(full, proc.returncode, proc.stderr)
     return proc.stdout

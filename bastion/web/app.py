@@ -52,8 +52,19 @@ async def auth_gate(request: Request, call_next):
     return RedirectResponse("/login", status_code=303)
 
 
+@app.middleware("http")
+async def lang_cookie(request: Request, call_next):
+    """Persist `?lang=` as a cookie on any page so the toggle works everywhere."""
+    response = await call_next(request)
+    lang = request.query_params.get("lang")
+    if lang in i18n.SUPPORTED:
+        response.set_cookie("lang", lang, max_age=31_536_000, samesite="lax")
+    return response
+
+
 def _lang(request: Request) -> str:
-    return i18n.normalize(request.cookies.get("lang", i18n.DEFAULT))
+    # Honor `?lang=` for the current render; the cookie persists it (middleware).
+    return i18n.normalize(request.query_params.get("lang") or request.cookies.get("lang"))
 
 
 def _ctx(request: Request, lang: str, active: str = "", **extra) -> dict:
@@ -113,6 +124,28 @@ async def action_ban(request: Request):
         return RedirectResponse(f"/view/banned?err={quote(str(e))}", status_code=303)
 
 
+@app.post("/action/ban-bulk")
+async def action_ban_bulk(request: Request):
+    form = await request.form()
+    jail = form.get("jail", "")
+    if form.get("scope") == "all":
+        data, _ = dashboard.top_attackers()
+        ips = [a.ip for a in (data or [])]
+    else:
+        ips = form.getlist("ip")
+
+    ok = fail = 0
+    for ip in ips:
+        try:
+            actions.ban(jail, ip)
+            ok += 1
+        except (ValueError, CommandError):
+            fail += 1
+
+    # HX-Redirect makes HTMX do a full client-side navigation to the result page.
+    return HTMLResponse("", headers={"HX-Redirect": f"/view/attackers?ok={ok}&fail={fail}"})
+
+
 @app.post("/action/unban", response_class=HTMLResponse)
 async def action_unban(request: Request):
     form = await request.form()
@@ -128,13 +161,11 @@ async def action_unban(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    # `?lang=` switches and is persisted as a cookie; panels inherit it.
-    lang = i18n.normalize(request.query_params.get("lang") or request.cookies.get("lang"))
-    response = templates.TemplateResponse(
-        request, "index.html", _ctx(request, lang, active="home", summary=dashboard.summary())
+    # `?lang=` is honored here and persisted as a cookie by the lang middleware.
+    return templates.TemplateResponse(
+        request, "index.html",
+        _ctx(request, _lang(request), active="home", summary=dashboard.summary()),
     )
-    response.set_cookie("lang", lang, max_age=31_536_000, samesite="lax")
-    return response
 
 
 # ---------- Detail pages (full, sortable + filterable) ----------
@@ -154,11 +185,13 @@ def view_banned(request: Request):
 @app.get("/view/attackers", response_class=HTMLResponse)
 def view_attackers(request: Request):
     data, error = dashboard.top_attackers()
+    summaries, _ = dashboard.jail_summaries()
     total = sum(a.count for a in (data or [])) or 1
     return templates.TemplateResponse(
         request, "views/attackers.html",
         _ctx(request, _lang(request), active="attackers", attackers=data or [],
-             total=total, error=error),
+             jails=[s.name for s in (summaries or [])], total=total, error=error,
+             ok=request.query_params.get("ok"), fail=request.query_params.get("fail")),
     )
 
 

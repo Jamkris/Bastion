@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bastion</title>
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
@@ -87,6 +88,8 @@
     .btn-danger:hover { background: #5a2027; }
     .btn-ban { border-color: #2ea043; background: #17351f; color: #56d364; }
     .banner-err { margin: 12px 16px; padding: 10px 12px; border: 1px solid #6e2831; background: #3d1a1f; color: #ff7b72; border-radius: 8px; font-size: 13px; }
+    .banner-ok { margin: 12px 16px; padding: 10px 12px; border: 1px solid #238636; background: #12261a; color: #56d364; border-radius: 8px; font-size: 13px; }
+    td input[type=checkbox], th input[type=checkbox] { cursor: pointer; }
 
     @media (max-width: 720px) {
       .app { flex-direction: column; }
@@ -161,6 +164,26 @@
         apply(key, panel);
       });
     })();
+
+    // Replace HTMX's native confirm() with a themed SweetAlert2 dialog.
+    // Falls back to the native prompt if SweetAlert2 failed to load (offline).
+    document.addEventListener("htmx:confirm", function (e) {
+      if (!e.detail.question || typeof Swal === "undefined") return;
+      e.preventDefault();
+      Swal.fire({
+        title: e.detail.question,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "{{ t('confirm_ok') }}",
+        cancelButtonText: "{{ t('cancel') }}",
+        background: "#161b22",
+        color: "#e6edf3",
+        confirmButtonColor: "#da3633",
+        cancelButtonColor: "#30363d",
+      }).then(function (r) {
+        if (r.isConfirmed) e.detail.issueRequest(true);
+      });
+    });
 
     // Click-to-sort on any th[data-sort] ("num" | "text").
     document.addEventListener("click", function (e) {
