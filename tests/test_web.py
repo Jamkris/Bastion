@@ -62,6 +62,31 @@ def test_settings_page_korean():
     assert "알림 (ntfy)" in r.text
 
 
+def test_settings_has_language_section():
+    c = TestClient(app)
+    r = c.get("/settings")
+    assert "English" in r.text and "한국어" in r.text
+    assert 'href="/settings?lang=ko"' in r.text
+
+
+def test_settings_is_standalone_page():
+    # The settings screen is its own document, not the sidebar app shell.
+    c = TestClient(app)
+    r = c.get("/settings")
+    assert "<!doctype html>" in r.text.lower()
+    assert 'class="sidebar"' not in r.text
+
+
+def test_dashboard_has_profile_menu():
+    c = TestClient(app)
+    r = c.get("/")
+    assert r.status_code == 200
+    assert 'id="profileBtn"' in r.text
+    assert 'href="/settings"' in r.text
+    # Settings was removed from the sidebar nav (now in the profile dropdown).
+    assert '<span class="ico">⚙</span>' in r.text  # present only in the dropdown
+
+
 def test_login_locks_out_after_repeated_failures(monkeypatch):
     monkeypatch.setattr(webapp, "_login_limiter", RateLimiter())
     monkeypatch.setattr(

@@ -45,6 +45,27 @@
     .refresh { color: #7d8590; font-size: 12px; }
     .sep { color: #30363d; }
 
+    /* Profile dropdown (top-right) */
+    .profile { position: relative; }
+    .profile-btn {
+      width: 30px; height: 30px; border-radius: 50%; border: 1px solid #30363d;
+      background: #21262d; color: #e6edf3; cursor: pointer; font-size: 14px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .profile-btn:hover { background: #30363d; }
+    .profile .menu {
+      position: absolute; right: 0; top: 40px; min-width: 168px; padding: 6px;
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.45); display: none; z-index: 30;
+    }
+    .profile.open .menu { display: block; }
+    .profile .menu a {
+      display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      color: #e6edf3; text-decoration: none; border-radius: 6px; font-size: 13px;
+    }
+    .profile .menu a:hover { background: #1c2128; }
+    .profile .menu .ico { width: 16px; text-align: center; color: #7d8590; }
+
     /* Summary bar */
     .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
     .stat { background: #161b22; border: 1px solid #21262d; border-radius: 10px; padding: 16px 18px; }
@@ -92,27 +113,6 @@
     .banner-ok { margin: 12px 16px; padding: 10px 12px; border: 1px solid #238636; background: #12261a; color: #56d364; border-radius: 8px; font-size: 13px; }
     td input[type=checkbox], th input[type=checkbox] { cursor: pointer; }
 
-    /* Settings forms */
-    .settings { display: grid; gap: 20px; max-width: 720px; }
-    .settings .body { padding: 16px; }
-    .settings .hint { color: #7d8590; font-size: 12px; margin: 0 0 14px; }
-    .field { margin-bottom: 14px; }
-    .field label { display: block; color: #adbac7; font-size: 13px; margin-bottom: 5px; }
-    .field .sub { color: #6e7681; font-size: 11px; font-weight: 400; }
-    .field input[type=text], .field input[type=url], .field input[type=password],
-    .field input[type=number], .field select {
-      width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
-      color: #e6edf3; padding: 8px 10px; font-size: 13px;
-    }
-    .field input:focus, .field select:focus { outline: none; border-color: #388bfd; }
-    .field.check { display: flex; align-items: center; gap: 8px; }
-    .field.check label { margin: 0; }
-    .field.check input { width: auto; }
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .formactions { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
-    .btn-primary { border-color: #238636; background: #238636; color: #fff; }
-    .btn-primary:hover { background: #2ea043; }
-
     @media (max-width: 720px) {
       .app { flex-direction: column; }
       .sidebar { width: auto; display: flex; overflow-x: auto; padding: 8px; }
@@ -133,7 +133,6 @@
         <a href="/view/ports" class="{{ 'active' if active == 'ports' else '' }}"><span class="ico">🔌</span>{{ t("panel_ports") }}</a>
         <a href="/view/firewall" class="{{ 'active' if active == 'firewall' else '' }}"><span class="ico">🧱</span>{{ t("panel_firewall") }}</a>
         <a href="/view/allowlist" class="{{ 'active' if active == 'allowlist' else '' }}"><span class="ico">✅</span>{{ t("nav_allowlist") }}</a>
-        <a href="/settings" class="{{ 'active' if active == 'settings' else '' }}"><span class="ico">⚙</span>{{ t("nav_settings") }}</a>
       </nav>
     </aside>
 
@@ -145,8 +144,14 @@
           {% if active == 'home' %}<span class="refresh">{{ t("auto_refresh") }}</span><span class="sep">·</span>{% endif %}
           <a href="?lang=en" class="{{ 'active' if lang == 'en' else '' }}">EN</a>
           <a href="?lang=ko" class="{{ 'active' if lang == 'ko' else '' }}">KO</a>
-          {% if auth_enabled %}<span class="sep">·</span><a href="/logout">{{ t("logout") }}</a>{% endif %}
         </nav>
+        <div class="profile" id="profile">
+          <button type="button" class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" title="{{ t('menu') }}">👤</button>
+          <div class="menu" role="menu">
+            <a href="/settings" role="menuitem"><span class="ico">⚙</span>{{ t("nav_settings") }}</a>
+            {% if auth_enabled %}<a href="/logout" role="menuitem"><span class="ico">⎋</span>{{ t("logout") }}</a>{% endif %}
+          </div>
+        </div>
       </header>
       <main>
         {% block content %}{% endblock %}
@@ -160,6 +165,24 @@
   </div>
 
   <script>
+    // Profile dropdown: toggle on click, close on outside click or Escape.
+    (function () {
+      const profile = document.getElementById("profile");
+      const btn = document.getElementById("profileBtn");
+      if (!profile || !btn) return;
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const open = profile.classList.toggle("open");
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest("#profile")) profile.classList.remove("open");
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") profile.classList.remove("open");
+      });
+    })();
+
     // Client-side row filtering that survives HTMX panel swaps.
     (function () {
       const store = {};
