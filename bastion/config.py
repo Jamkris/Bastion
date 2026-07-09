@@ -7,7 +7,11 @@ from dataclasses import dataclass
 
 def _load_dotenv(path: str = ".env") -> None:
     """Load KEY=VALUE lines from a .env file into the environment (if present).
-    Existing env vars win (setdefault), so Docker/shell values are not overridden."""
+    Existing env vars win (setdefault), so Docker/shell values are not overridden.
+    Set BASTION_NO_DOTENV=1 to skip loading entirely (used by the test suite so
+    that runs are not affected by a developer's local .env)."""
+    if os.environ.get("BASTION_NO_DOTENV") == "1":
+        return
     if not os.path.exists(path):
         return
     with open(path, "r", encoding="utf-8") as f:
