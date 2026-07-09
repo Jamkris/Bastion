@@ -3,6 +3,9 @@
 {% block content %}
   <section class="panel full" data-panel="banned-view">
     <h2><span>{{ t("panel_banned") }} <span class="badge num">{{ banned|length }}</span></span></h2>
+
+    {% if action_error %}<div class="banner-err">{{ action_error }}</div>{% endif %}
+
     {% if error %}
       <div class="err">{{ error }}</div>
     {% else %}
@@ -12,6 +15,18 @@
           {{ t("summary_total_failed") }} {{ s.total_failed }}
         </div>
       {% endfor %}
+
+      {% if jails %}
+      <form class="actbar" method="post" action="/action/ban">
+        <span class="lbl">{{ t("ban_ip") }}:</span>
+        <select name="jail">
+          {% for j in jails %}<option value="{{ j }}">{{ j }}</option>{% endfor %}
+        </select>
+        <input name="ip" type="text" placeholder="IP" required>
+        <button class="btn btn-ban" type="submit">{{ t("ban") }}</button>
+      </form>
+      {% endif %}
+
       <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
       <div class="body">
         <table>
@@ -20,6 +35,7 @@
             <th data-sort="text">{{ t("th_ip") }}</th>
             <th data-sort="text">{{ t("th_country") }}</th>
             <th data-sort="text">{{ t("th_jail") }}</th>
+            <th>{{ t("th_action") }}</th>
           </tr></thead>
           <tbody>
             {% for b in banned %}
@@ -28,6 +44,13 @@
                 <td>{{ b.ip }}</td>
                 <td>{{ flag(b.country) }} {{ b.country or "—" }}</td>
                 <td>{{ b.jail }}</td>
+                <td>
+                  <button class="btn btn-danger"
+                          hx-post="/action/unban"
+                          hx-vals='{"jail": "{{ b.jail }}", "ip": "{{ b.ip }}"}'
+                          hx-target="closest tr" hx-swap="outerHTML"
+                          hx-confirm="{{ t('confirm_unban') }} {{ b.ip }}?">{{ t("unban") }}</button>
+                </td>
               </tr>
             {% endfor %}
           </tbody>

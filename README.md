@@ -10,7 +10,15 @@ A lightweight **fail2ban + nftables observability dashboard** for a single self-
 - **Firewall rules** — chains, rules and sets from `nft -j list ruleset` (nftables)
 - Client-side search/filter on every panel; live 30s refresh via HTMX
 
-> v0.2 will add allow/ban actions and ban/unban buttons behind a privilege-separated design.
+### Actions (v2)
+
+The Banned IPs page can **ban** an IP (jail + IP form) and **unban** any banned IP
+(per-row button). Actions go through `fail2ban-client` over the same socket used for
+reading, so no extra privilege is needed under Docker. Inputs are strictly validated
+(`ipaddress` + jail allowlist), commands run as argv lists (never a shell string), and
+every action is audit-logged. Requires authentication.
+
+Planned next: nftables-level allowlist management and ntfy alerts.
 
 ## Architecture
 

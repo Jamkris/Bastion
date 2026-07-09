@@ -8,8 +8,10 @@
 
 from __future__ import annotations
 
+import html
 import logging
 import os
+from urllib.parse import quote
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -17,7 +19,8 @@ from fastapi.templating import Jinja2Templates
 
 from bastion import __version__, auth, i18n
 from bastion.config import settings
-from bastion.services import dashboard, geoip
+from bastion.runner import CommandError
+from bastion.services import actions, dashboard, geoip
 from bastion.util import flag_emoji, port_scope
 
 log = logging.getLogger("bastion")
@@ -44,7 +47,7 @@ async def auth_gate(request: Request, call_next):
         return await call_next(request)
     if auth.is_authenticated(request.cookies.get(auth.COOKIE_NAME), password):
         return await call_next(request)
-    if path.startswith(("/api", "/panel")):
+    if path.startswith(("/api", "/panel", "/action")):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return RedirectResponse("/login", status_code=303)
 
@@ -99,6 +102,30 @@ def logout():
     return response
 
 
+# ---------- Write actions (ban / unban via fail2ban) ----------
+@app.post("/action/ban", response_class=HTMLResponse)
+async def action_ban(request: Request):
+    form = await request.form()
+    try:
+        actions.ban(form.get("jail", ""), form.get("ip", ""))
+        return RedirectResponse("/view/banned", status_code=303)
+    except (ValueError, CommandError) as e:
+        return RedirectResponse(f"/view/banned?err={quote(str(e))}", status_code=303)
+
+
+@app.post("/action/unban", response_class=HTMLResponse)
+async def action_unban(request: Request):
+    form = await request.form()
+    try:
+        actions.unban(form.get("jail", ""), form.get("ip", ""))
+        return HTMLResponse("")  # HTMX removes the row on success
+    except (ValueError, CommandError) as e:
+        # 200 so HTMX swaps the error row into place.
+        return HTMLResponse(
+            f'<tr><td colspan="5" class="err">{html.escape(str(e))}</td></tr>'
+        )
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     # `?lang=` switches and is persisted as a cookie; panels inherit it.
@@ -115,10 +142,12 @@ def index(request: Request):
 def view_banned(request: Request):
     data, error = dashboard.banned_ips()
     summaries, _ = dashboard.jail_summaries()
+    jails = [s.name for s in (summaries or [])]
     return templates.TemplateResponse(
         request, "views/banned.html",
         _ctx(request, _lang(request), active="banned", banned=data or [],
-             summaries=summaries or [], error=error),
+             summaries=summaries or [], jails=jails, error=error,
+             action_error=request.query_params.get("err", "")),
     )
 
 
