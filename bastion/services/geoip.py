@@ -1,4 +1,4 @@
-"""IP -> country code enrichment. Uses GeoLite2 .mmdb if present, else None."""
+"""IP -> country code enrichment. Uses a GeoIP2/DB-IP .mmdb if present, else None."""
 
 from __future__ import annotations
 
@@ -22,6 +22,11 @@ def _reader():
         return geoip2.database.Reader(settings.geoip_db)
     except Exception:
         return None
+
+
+def is_active() -> bool:
+    """True when a GeoIP database is loaded and ready."""
+    return _reader() is not None
 
 
 @lru_cache(maxsize=8192)

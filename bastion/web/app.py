@@ -15,6 +15,7 @@ from fastapi.templating import Jinja2Templates
 
 from bastion import __version__, i18n
 from bastion.services import dashboard
+from bastion.services import geoip
 from bastion.util import flag_emoji, port_scope
 
 _TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
@@ -36,6 +37,7 @@ def _ctx(request: Request, lang: str, active: str = "", **extra) -> dict:
         "t": i18n.translator(lang),
         "version": __version__,
         "active": active,
+        "geoip_active": geoip.is_active(),
         **extra,
     }
 
@@ -148,4 +150,4 @@ def api_attackers():
 
 @app.get("/healthz")
 def healthz():
-    return {"status": "ok", "version": __version__}
+    return {"status": "ok", "version": __version__, "geoip": geoip.is_active()}

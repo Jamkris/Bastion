@@ -114,6 +114,11 @@
       <main>
         {% block content %}{% endblock %}
       </main>
+      {% if geoip_active %}
+      <footer style="padding:12px 24px;color:#484f58;font-size:11px;border-top:1px solid #21262d">
+        IP geolocation by <a href="https://db-ip.com" style="color:#6e7681">DB-IP</a> (CC BY 4.0)
+      </footer>
+      {% endif %}
     </div>
   </div>
 

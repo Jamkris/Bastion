@@ -48,6 +48,23 @@ BASTION_SUDO=true .venv/bin/uvicorn bastion.web.app:app --host 127.0.0.1 --port 
 bastion ALL=(root) NOPASSWD: /usr/sbin/nft -j list ruleset, /usr/bin/fail2ban-client status *
 ```
 
+## GeoIP (country flags)
+
+Docker builds automatically download the free **DB-IP IP-to-Country Lite** database
+(CC BY 4.0, no account required) and set `BASTION_GEOIP_DB`, so country flags work
+out of the box. To refresh it, rebuild the image (`docker compose build --no-cache`)
+or mount your own database and point `BASTION_GEOIP_DB` at it.
+
+For bare metal, download it once and set the env var:
+
+```bash
+scripts/download-geoip.sh /path/to/dbip-country-lite.mmdb
+export BASTION_GEOIP_DB=/path/to/dbip-country-lite.mmdb
+```
+
+MaxMind GeoLite2-Country works too — it uses the same `.mmdb` format; just point
+`BASTION_GEOIP_DB` at it. IP geolocation data © [DB-IP](https://db-ip.com) (CC BY 4.0).
+
 ## Demo mode
 
 Set `BASTION_DEMO=true` to serve sample data instead of running commands — useful for previewing the UI on a machine without the Linux CLIs (e.g. macOS) and for a public demo.
@@ -63,7 +80,7 @@ BASTION_DEMO=true .venv/bin/uvicorn bastion.web.app:app --reload --port 8009
 | `BASTION_SUDO` | `false` | Prefix commands with sudo |
 | `BASTION_DEMO` | `false` | Serve sample data |
 | `BASTION_JAILS` | (auto) | Jails to query, comma-separated |
-| `BASTION_GEOIP_DB` | (none) | Path to a GeoLite2 .mmdb |
+| `BASTION_GEOIP_DB` | (auto in Docker) | Path to a DB-IP/GeoLite2 .mmdb |
 | `BASTION_AUTH_LOG` | `/var/log/auth.log` | Auth log path |
 
 ## Internationalization
