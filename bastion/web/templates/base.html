@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bastion</title>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117; color: #e6edf3; font-size: 14px;
+    }
+    header {
+      padding: 16px 24px; border-bottom: 1px solid #21262d;
+      display: flex; align-items: baseline; gap: 12px;
+    }
+    header h1 { margin: 0; font-size: 18px; letter-spacing: 0.5px; }
+    header .ver { color: #7d8590; font-size: 12px; }
+    main { padding: 24px; display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
+    .panel { background: #161b22; border: 1px solid #21262d; border-radius: 10px; overflow: hidden; }
+    .panel > h2 {
+      margin: 0; padding: 12px 16px; font-size: 14px; background: #1c2128;
+      border-bottom: 1px solid #21262d; display: flex; justify-content: space-between;
+    }
+    .panel .body { max-height: 420px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 7px 16px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    th { color: #7d8590; font-weight: 500; position: sticky; top: 0; background: #161b22; }
+    tr:hover td { background: #1c2128; }
+    .muted { color: #7d8590; }
+    .err { color: #f85149; padding: 12px 16px; font-family: monospace; font-size: 12px; white-space: pre-wrap; }
+    .badge { background: #21262d; border-radius: 20px; padding: 1px 9px; font-size: 12px; color: #7d8590; }
+    .num { font-variant-numeric: tabular-nums; }
+    code { color: #79c0ff; }
+    .lang { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .lang a { color: #7d8590; text-decoration: none; font-size: 12px; padding: 2px 6px; border-radius: 6px; }
+    .lang a.active { color: #e6edf3; background: #21262d; }
+    .lang .sep { color: #30363d; }
+    .refresh { color: #7d8590; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛡 Bastion</h1>
+    <span class="ver">v{{ version }}</span>
+    <nav class="lang">
+      <span class="refresh">{{ t("auto_refresh") }}</span>
+      <span class="sep">·</span>
+      <a href="/?lang=en" class="{{ 'active' if lang == 'en' else '' }}">EN</a>
+      <a href="/?lang=ko" class="{{ 'active' if lang == 'ko' else '' }}">KO</a>
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

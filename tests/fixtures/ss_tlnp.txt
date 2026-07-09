@@ -1,0 +1,11 @@
+State           Recv-Q          Send-Q                   Local Address:Port                    Peer Address:Port          Process
+LISTEN          0               128                          127.0.0.1:631                          0.0.0.0:*
+LISTEN          0               128                            0.0.0.0:44322                        0.0.0.0:*
+LISTEN          0               4096                           0.0.0.0:8480                         0.0.0.0:*
+LISTEN          0               511                            0.0.0.0:3017                         0.0.0.0:*              users:(("node /home/jamk",pid=895,fd=20))
+LISTEN          0               128                            0.0.0.0:22                           0.0.0.0:*
+LISTEN          0               4096                           0.0.0.0:53                           0.0.0.0:*
+LISTEN          0               4096                                 *:9090                               *:*
+LISTEN          0               4096                              [::]:8480                            [::]:*
+LISTEN          0               511                                  *:3018                               *:*              users:(("next-server (v1",pid=922,fd=18))
+LISTEN          0               128                               [::]:22                              [::]:*

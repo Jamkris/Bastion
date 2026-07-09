@@ -1,0 +1,18 @@
+<h2>
+  {{ t("panel_attackers") }}
+  <span class="badge num">{{ attackers|length }}</span>
+</h2>
+<div class="body">
+  {% if error %}
+    <div class="err">{{ error }}</div>
+  {% else %}
+    <table>
+      <thead><tr><th>{{ t("th_ip") }}</th><th>{{ t("th_country") }}</th><th>{{ t("th_attempts") }}</th></tr></thead>
+      <tbody>
+        {% for a in attackers %}
+          <tr><td>{{ a.ip }}</td><td>{{ a.country or "—" }}</td><td class="num">{{ a.count }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>

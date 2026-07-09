@@ -1,0 +1,28 @@
+<h2>
+  {{ t("panel_firewall") }}
+  <span class="badge">
+    {{ t("fw_chains") }} {{ ruleset.chains|length if ruleset else 0 }} ·
+    {{ t("fw_rules") }} {{ ruleset.rules|length if ruleset else 0 }} ·
+    {{ t("fw_sets") }} {{ ruleset.sets|length if ruleset else 0 }}
+  </span>
+</h2>
+<div class="body">
+  {% if error %}
+    <div class="err">{{ error }}</div>
+  {% elif ruleset %}
+    <table>
+      <thead><tr><th>{{ t("th_type") }}</th><th>{{ t("th_family_table") }}</th><th>{{ t("th_detail") }}</th></tr></thead>
+      <tbody>
+        {% for c in ruleset.chains %}
+          <tr><td class="muted">chain</td><td>{{ c.family }}/{{ c.table }}</td><td><code>{{ c.name }}</code> {{ c.hook or "" }} {{ c.policy or "" }}</td></tr>
+        {% endfor %}
+        {% for s in ruleset.sets %}
+          <tr><td class="muted">set</td><td>{{ s.family }}/{{ s.table }}</td><td><code>{{ s.name }}</code> · {{ s.elements|length }} elem</td></tr>
+        {% endfor %}
+        {% for r in ruleset.rules %}
+          <tr><td class="muted">rule</td><td>{{ r.family }}/{{ r.table }}</td><td>{{ r.chain }} #{{ r.handle }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>

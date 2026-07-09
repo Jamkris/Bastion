@@ -1,0 +1,23 @@
+<h2>
+  {{ t("panel_banned") }}
+  <span class="badge num">{{ banned|length }}</span>
+</h2>
+<div class="body">
+  {% if error %}
+    <div class="err">{{ error }}</div>
+  {% else %}
+    {% for s in summaries %}
+      <div style="padding:8px 16px" class="muted">
+        <code>{{ s.name }}</code> · {{ t("summary_currently_banned") }} {{ s.currently_banned }} · {{ t("summary_total_failed") }} {{ s.total_failed }}
+      </div>
+    {% endfor %}
+    <table>
+      <thead><tr><th>{{ t("th_ip") }}</th><th>{{ t("th_country") }}</th><th>{{ t("th_jail") }}</th></tr></thead>
+      <tbody>
+        {% for b in banned %}
+          <tr><td>{{ b.ip }}</td><td>{{ b.country or "—" }}</td><td>{{ b.jail }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>

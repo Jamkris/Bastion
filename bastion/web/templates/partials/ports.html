@@ -1,0 +1,23 @@
+<h2>
+  {{ t("panel_ports") }}
+  <span class="badge num">{{ ports|length }}</span>
+</h2>
+<div class="body">
+  {% if error %}
+    <div class="err">{{ error }}</div>
+  {% else %}
+    <table>
+      <thead><tr><th>{{ t("th_port") }}</th><th>{{ t("th_address") }}</th><th>{{ t("th_process") }}</th><th>{{ t("th_pid") }}</th></tr></thead>
+      <tbody>
+        {% for p in ports %}
+          <tr>
+            <td class="num">{{ p.port }}</td>
+            <td>{{ p.local_address }}</td>
+            <td>{{ p.process or "—" }}</td>
+            <td class="num muted">{{ p.pid or "" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
