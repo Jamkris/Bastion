@@ -8,9 +8,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import html
 import logging
 import os
+import time
+from contextlib import asynccontextmanager
 from urllib.parse import quote
 
 from fastapi import FastAPI, Request
@@ -21,7 +24,7 @@ from fastapi.templating import Jinja2Templates
 from bastion import __version__, auth, i18n, prefs
 from bastion.config import settings
 from bastion.runner import CommandError
-from bastion.services import actions, dashboard, geoip
+from bastion.services import actions, dashboard, geoip, notify
 from bastion.util import flag_emoji, port_scope
 
 log = logging.getLogger("bastion")
@@ -32,7 +35,16 @@ templates = Jinja2Templates(directory=_TEMPLATE_DIR)
 templates.env.globals["flag"] = flag_emoji
 templates.env.globals["scope"] = port_scope
 
-app = FastAPI(title="Bastion", version=__version__)
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    task = asyncio.create_task(_alert_loop())
+    try:
+        yield
+    finally:
+        task.cancel()
+
+
+app = FastAPI(title="Bastion", version=__version__, lifespan=_lifespan)
 app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 
 # Paths reachable without authentication.
@@ -40,6 +52,68 @@ _PUBLIC_PATHS = {"/login", "/logout", "/healthz", "/favicon.ico"}
 
 if not settings.auth_password:
     log.warning("BASTION_AUTH_PASSWORD is not set — the dashboard is OPEN (no login).")
+
+
+# ---------- Ban-spike alerting (background poller) ----------
+# Poll fail2ban periodically; when a burst of new bans crosses the configured
+# threshold within the window, push one ntfy alert (rate-limited by the window).
+POLL_INTERVAL_SEC = 60
+
+_seen_bans: set[tuple[str, str]] = set()
+_ban_events: list[float] = []
+_last_alert_at = 0.0
+_primed = False
+
+
+def _poll_bans_once(now: float) -> None:
+    """One alerting pass. Pure-ish: time is injected so it can be tested."""
+    global _seen_bans, _ban_events, _last_alert_at, _primed
+    n = prefs.get("notifications")
+    if not n["enabled"]:
+        return
+    data, error = dashboard.banned_ips()
+    if error:
+        return
+    current = {(b.jail, b.ip) for b in (data or [])}
+
+    if not _primed:
+        # First pass just records the baseline so we don't alert on IPs that
+        # were already banned before the poller started.
+        _seen_bans = current
+        _primed = True
+        return
+
+    new = current - _seen_bans
+    _seen_bans = current
+    window_sec = n["ban_spike_window_min"] * 60
+    _ban_events = notify.prune(_ban_events + [now] * len(new), now, window_sec)
+
+    if (
+        new
+        and notify.should_alert(_ban_events, n["ban_spike_threshold"])
+        and now - _last_alert_at > window_sec
+    ):
+        count = len(_ban_events)
+        sample = ", ".join(ip for _, ip in list(new)[:5])
+        notify.send(
+            f"Bastion: ban spike ({count})",
+            f"{count} IPs banned in the last {n['ban_spike_window_min']} min. "
+            f"Newest: {sample}",
+            tags="rotating_light",
+            priority=n["priority"],
+            n=n,
+        )
+        _last_alert_at = now
+        _ban_events = []
+
+
+async def _alert_loop() -> None:
+    while True:
+        await asyncio.sleep(POLL_INTERVAL_SEC)
+        try:
+            _poll_bans_once(time.time())
+        except Exception as e:  # never let the loop die
+            log.warning("ban-spike poll failed: %s", e)
 
 
 @app.middleware("http")
@@ -173,6 +247,17 @@ def settings_page(request: Request):
              saved=request.query_params.get("saved"),
              test_result=request.query_params.get("test")),
     )
+
+
+@app.post("/settings/notifications/test")
+async def settings_test_notify(request: Request):
+    # Persist the submitted values first, then send a probe with them.
+    form = await request.form()
+    n = prefs.update("notifications", dict(form))
+    ok = notify.send(
+        "Bastion test", "Notifications are working.", tags="white_check_mark", n=n
+    )
+    return RedirectResponse(f"/settings?test={'ok' if ok else 'fail'}", status_code=303)
 
 
 @app.post("/settings/{section}")
