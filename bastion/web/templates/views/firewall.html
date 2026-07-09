@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ t("panel_firewall") }}{% endblock %}
+{% block content %}
+  {% if error %}
+    <section class="panel full"><div class="err">{{ error }}</div></section>
+  {% elif ruleset %}
+    <section class="panel full" data-panel="fw-chains" style="margin-bottom:20px">
+      <h2><span>{{ t("th_type") }}: chain <span class="badge num">{{ ruleset.chains|length }}</span></span></h2>
+      <div class="body"><table>
+        <thead><tr>
+          <th data-sort="text">{{ t("th_family_table") }}</th>
+          <th data-sort="text">{{ t("th_name") }}</th>
+          <th data-sort="text">{{ t("th_type") }}</th>
+          <th data-sort="text">{{ t("th_hook") }}</th>
+          <th data-sort="text">{{ t("th_policy") }}</th>
+        </tr></thead>
+        <tbody>
+          {% for c in ruleset.chains %}
+            <tr><td>{{ c.family }}/{{ c.table }}</td><td><code>{{ c.name }}</code></td>
+              <td class="muted">{{ c.type or "—" }}</td><td class="muted">{{ c.hook or "—" }}</td>
+              <td class="muted">{{ c.policy or "—" }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="panel full" data-panel="fw-sets" style="margin-bottom:20px">
+      <h2><span>{{ t("th_type") }}: set <span class="badge num">{{ ruleset.sets|length }}</span></span></h2>
+      <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
+      <div class="body"><table>
+        <thead><tr>
+          <th data-sort="text">{{ t("th_family_table") }}</th>
+          <th data-sort="text">{{ t("th_name") }}</th>
+          <th data-sort="text">{{ t("th_type") }}</th>
+          <th data-sort="num">{{ t("th_elements") }}</th>
+        </tr></thead>
+        <tbody>
+          {% for s in ruleset.sets %}
+            <tr><td>{{ s.family }}/{{ s.table }}</td><td><code>{{ s.name }}</code></td>
+              <td class="muted">{{ s.type }}</td>
+              <td class="num">{{ s.elements|length }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="panel full" data-panel="fw-rules">
+      <h2><span>{{ t("th_type") }}: rule <span class="badge num">{{ ruleset.rules|length }}</span></span></h2>
+      <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
+      <div class="body"><table>
+        <thead><tr>
+          <th data-sort="text">{{ t("th_family_table") }}</th>
+          <th data-sort="text">{{ t("th_detail") }}</th>
+          <th data-sort="num">#</th>
+          <th data-sort="text">{{ t("th_expression") }}</th>
+        </tr></thead>
+        <tbody>
+          {% for r in ruleset.rules %}
+            <tr><td>{{ r.family }}/{{ r.table }}</td><td><code>{{ r.chain }}</code></td>
+              <td class="num muted">{{ r.handle }}</td>
+              <td class="muted" style="white-space:normal">{{ r.expr }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+  {% endif %}
+{% endblock %}

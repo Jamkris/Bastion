@@ -1,6 +1,6 @@
 <h2>
-  {{ t("panel_ports") }}
-  <span class="badge num">{{ ports|length }}</span>
+  <span>{{ t("panel_ports") }} <span class="badge num">{{ ports|length }}</span></span>
+  <a href="/view/ports">{{ t("view_details") }} →</a>
 </h2>
 {% if not error %}<div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>{% endif %}
 <div class="body">

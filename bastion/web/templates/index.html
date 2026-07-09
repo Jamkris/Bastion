@@ -1,18 +1,28 @@
 {% extends "base.html" %}
+{% block title %}{{ t("nav_home") }}{% endblock %}
 {% block content %}
-  <section class="panel" data-panel="banned" hx-get="/panel/banned" hx-trigger="load, every 30s" hx-swap="innerHTML">
-    <h2>{{ t("panel_banned") }} <span class="muted">{{ t("loading") }}</span></h2>
-  </section>
+  <div class="summary">
+    <div class="stat"><div class="n num">{{ summary.total_banned }}</div><div class="l">{{ t("sum_banned") }}</div></div>
+    <div class="stat"><div class="n num">{{ summary.attackers }}</div><div class="l">{{ t("sum_attackers") }}</div></div>
+    <div class="stat"><div class="n num">{{ summary.open_ports }}</div><div class="l">{{ t("sum_ports") }}</div></div>
+    <div class="stat"><div class="n num">{{ summary.jail_count }}</div><div class="l">{{ t("sum_jails") }}</div></div>
+  </div>
 
-  <section class="panel" data-panel="attackers" hx-get="/panel/attackers" hx-trigger="load, every 30s" hx-swap="innerHTML">
-    <h2>{{ t("panel_attackers") }} <span class="muted">{{ t("loading") }}</span></h2>
-  </section>
+  <div class="overview">
+    <section class="panel" data-panel="banned" hx-get="/panel/banned" hx-trigger="load, every 30s" hx-swap="innerHTML">
+      <h2>{{ t("panel_banned") }} <span class="muted">{{ t("loading") }}</span></h2>
+    </section>
 
-  <section class="panel" data-panel="ports" hx-get="/panel/ports" hx-trigger="load, every 30s" hx-swap="innerHTML">
-    <h2>{{ t("panel_ports") }} <span class="muted">{{ t("loading") }}</span></h2>
-  </section>
+    <section class="panel" data-panel="attackers" hx-get="/panel/attackers" hx-trigger="load, every 30s" hx-swap="innerHTML">
+      <h2>{{ t("panel_attackers") }} <span class="muted">{{ t("loading") }}</span></h2>
+    </section>
 
-  <section class="panel" data-panel="firewall" hx-get="/panel/firewall" hx-trigger="load, every 30s" hx-swap="innerHTML">
-    <h2>{{ t("panel_firewall") }} <span class="muted">{{ t("loading") }}</span></h2>
-  </section>
+    <section class="panel" data-panel="ports" hx-get="/panel/ports" hx-trigger="load, every 30s" hx-swap="innerHTML">
+      <h2>{{ t("panel_ports") }} <span class="muted">{{ t("loading") }}</span></h2>
+    </section>
+
+    <section class="panel" data-panel="firewall" hx-get="/panel/firewall" hx-trigger="load, every 30s" hx-swap="innerHTML">
+      <h2>{{ t("panel_firewall") }} <span class="muted">{{ t("loading") }}</span></h2>
+    </section>
+  </div>
 {% endblock %}

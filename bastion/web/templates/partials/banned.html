@@ -1,6 +1,6 @@
 <h2>
-  {{ t("panel_banned") }}
-  <span class="badge num">{{ banned|length }}</span>
+  <span>{{ t("panel_banned") }} <span class="badge num">{{ banned|length }}</span></span>
+  <a href="/view/banned">{{ t("view_details") }} →</a>
 </h2>
 {% if not error %}<div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>{% endif %}
 <div class="body">
@@ -15,8 +15,8 @@
     <table>
       <thead><tr><th>{{ t("th_ip") }}</th><th>{{ t("th_country") }}</th><th>{{ t("th_jail") }}</th></tr></thead>
       <tbody>
-        {% for b in banned %}
-          <tr><td>{{ b.ip }}</td><td>{{ b.country or "—" }}</td><td>{{ b.jail }}</td></tr>
+        {% for b in banned[:50] %}
+          <tr><td>{{ b.ip }}</td><td>{{ flag(b.country) }} {{ b.country or "—" }}</td><td>{{ b.jail }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

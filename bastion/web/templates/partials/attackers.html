@@ -1,6 +1,6 @@
 <h2>
-  {{ t("panel_attackers") }}
-  <span class="badge num">{{ attackers|length }}</span>
+  <span>{{ t("panel_attackers") }} <span class="badge num">{{ attackers|length }}</span></span>
+  <a href="/view/attackers">{{ t("view_details") }} →</a>
 </h2>
 {% if not error %}<div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>{% endif %}
 <div class="body">
@@ -11,7 +11,7 @@
       <thead><tr><th>{{ t("th_ip") }}</th><th>{{ t("th_country") }}</th><th>{{ t("th_attempts") }}</th></tr></thead>
       <tbody>
         {% for a in attackers %}
-          <tr><td>{{ a.ip }}</td><td>{{ a.country or "—" }}</td><td class="num">{{ a.count }}</td></tr>
+          <tr><td>{{ a.ip }}</td><td>{{ flag(a.country) }} {{ a.country or "—" }}</td><td class="num">{{ a.count }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

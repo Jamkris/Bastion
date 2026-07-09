@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ t("panel_ports") }}{% endblock %}
+{% block content %}
+  <section class="panel full" data-panel="ports-view">
+    <h2><span>{{ t("panel_ports") }} <span class="badge num">{{ ports|length }}</span></span></h2>
+    {% if error %}
+      <div class="err">{{ error }}</div>
+    {% else %}
+      <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
+      <div class="body">
+        <table>
+          <thead><tr>
+            <th data-sort="num">{{ t("th_port") }}</th>
+            <th data-sort="text">{{ t("th_proto") }}</th>
+            <th data-sort="text">{{ t("th_address") }}</th>
+            <th data-sort="text">{{ t("th_scope") }}</th>
+            <th data-sort="text">{{ t("th_process") }}</th>
+            <th data-sort="num">{{ t("th_pid") }}</th>
+            <th data-sort="text">{{ t("th_queue") }}</th>
+          </tr></thead>
+          <tbody>
+            {% for p in ports %}
+              <tr>
+                <td class="num">{{ p.port }}</td>
+                <td class="muted">{{ p.proto }}</td>
+                <td>{{ p.local_address }}</td>
+                <td class="muted">{{ scope(p.local_address) }}</td>
+                <td>{{ p.process or "—" }}</td>
+                <td class="num muted">{{ p.pid or "" }}</td>
+                <td class="num muted">{{ p.recv_q }} / {{ p.send_q }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

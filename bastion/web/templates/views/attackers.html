@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ t("panel_attackers") }}{% endblock %}
+{% block content %}
+  <section class="panel full" data-panel="attackers-view">
+    <h2><span>{{ t("panel_attackers") }} <span class="badge num">{{ attackers|length }}</span></span></h2>
+    {% if error %}
+      <div class="err">{{ error }}</div>
+    {% else %}
+      <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
+      <div class="body">
+        <table>
+          <thead><tr>
+            <th data-sort="num">{{ t("th_rank") }}</th>
+            <th data-sort="text">{{ t("th_ip") }}</th>
+            <th data-sort="text">{{ t("th_country") }}</th>
+            <th data-sort="num">{{ t("th_attempts") }}</th>
+            <th data-sort="num">{{ t("th_share") }}</th>
+          </tr></thead>
+          <tbody>
+            {% for a in attackers %}
+              <tr>
+                <td class="num muted">{{ loop.index }}</td>
+                <td>{{ a.ip }}</td>
+                <td>{{ flag(a.country) }} {{ a.country or "—" }}</td>
+                <td class="num">{{ a.count }}</td>
+                <td class="num muted">{{ (a.count / total * 100) | round(1) }}%</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

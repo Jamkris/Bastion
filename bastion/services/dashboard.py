@@ -58,3 +58,16 @@ def top_attackers():
 
 def firewall_ruleset():
     return _safe(lambda: p_firewall.parse_ruleset(firewall.raw_ruleset()))
+
+
+def summary() -> dict:
+    """Top-of-page counters. Tolerant of individual collector failures."""
+    jails, _ = jail_summaries()
+    ports, _ = open_ports()
+    attackers, _ = top_attackers()
+    return {
+        "total_banned": sum(j.currently_banned for j in (jails or [])),
+        "jail_count": len(jails or []),
+        "open_ports": len(ports or []),
+        "attackers": len(attackers or []),
+    }

@@ -1,10 +1,12 @@
 <h2>
-  {{ t("panel_firewall") }}
-  <span class="badge">
-    {{ t("fw_chains") }} {{ ruleset.chains|length if ruleset else 0 }} ·
-    {{ t("fw_rules") }} {{ ruleset.rules|length if ruleset else 0 }} ·
-    {{ t("fw_sets") }} {{ ruleset.sets|length if ruleset else 0 }}
+  <span>{{ t("panel_firewall") }}
+    <span class="badge">
+      {{ t("fw_chains") }} {{ ruleset.chains|length if ruleset else 0 }} ·
+      {{ t("fw_rules") }} {{ ruleset.rules|length if ruleset else 0 }} ·
+      {{ t("fw_sets") }} {{ ruleset.sets|length if ruleset else 0 }}
+    </span>
   </span>
+  <a href="/view/firewall">{{ t("view_details") }} →</a>
 </h2>
 {% if not error and ruleset %}<div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>{% endif %}
 <div class="body">

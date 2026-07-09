@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,62 +12,115 @@
       margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #0d1117; color: #e6edf3; font-size: 14px;
     }
-    header {
-      padding: 16px 24px; border-bottom: 1px solid #21262d;
-      display: flex; align-items: baseline; gap: 12px;
+    .app { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar { width: 220px; flex-shrink: 0; background: #12161c; border-right: 1px solid #21262d; padding: 16px 0; }
+    .brand { padding: 4px 20px 16px; font-size: 18px; letter-spacing: 0.5px; }
+    .nav a {
+      display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+      color: #7d8590; text-decoration: none; border-left: 2px solid transparent;
     }
-    header h1 { margin: 0; font-size: 18px; letter-spacing: 0.5px; }
+    .nav a:hover { background: #1c2128; color: #e6edf3; }
+    .nav a.active { color: #e6edf3; background: #1c2128; border-left-color: #388bfd; }
+    .nav .ico { width: 18px; text-align: center; }
+
+    /* Content */
+    .content { flex: 1; min-width: 0; }
+    header {
+      padding: 14px 24px; border-bottom: 1px solid #21262d;
+      display: flex; align-items: center; gap: 12px;
+    }
+    header h1 { margin: 0; font-size: 16px; }
     header .ver { color: #7d8590; font-size: 12px; }
-    main { padding: 24px; display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
+    main { padding: 24px; }
+    .overview { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
+
+    /* Language switch */
+    .lang { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .lang a { color: #7d8590; text-decoration: none; font-size: 12px; padding: 2px 6px; border-radius: 6px; }
+    .lang a.active { color: #e6edf3; background: #21262d; }
+    .refresh { color: #7d8590; font-size: 12px; }
+    .sep { color: #30363d; }
+
+    /* Summary bar */
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat { background: #161b22; border: 1px solid #21262d; border-radius: 10px; padding: 16px 18px; }
+    .stat .n { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .stat .l { color: #7d8590; font-size: 12px; margin-top: 4px; }
+
+    /* Panels & tables */
     .panel { background: #161b22; border: 1px solid #21262d; border-radius: 10px; overflow: hidden; }
     .panel > h2 {
       margin: 0; padding: 12px 16px; font-size: 14px; background: #1c2128;
-      border-bottom: 1px solid #21262d; display: flex; justify-content: space-between;
+      border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; align-items: center; gap: 8px;
     }
-    .panel .body { max-height: 420px; overflow: auto; }
+    .panel > h2 a { color: #7d8590; font-size: 12px; text-decoration: none; }
+    .panel > h2 a:hover { color: #e6edf3; }
+    .panel .body { max-height: 460px; overflow: auto; }
+    .full .body { max-height: none; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 7px 16px; border-bottom: 1px solid #21262d; white-space: nowrap; }
     th { color: #7d8590; font-weight: 500; position: sticky; top: 0; background: #161b22; }
+    th[data-sort] { cursor: pointer; user-select: none; }
+    th[data-sort]:hover { color: #e6edf3; }
+    th.sort-asc::after { content: " ▲"; color: #388bfd; }
+    th.sort-desc::after { content: " ▼"; color: #388bfd; }
     tr:hover td { background: #1c2128; }
     .muted { color: #7d8590; }
     .err { color: #f85149; padding: 12px 16px; font-family: monospace; font-size: 12px; white-space: pre-wrap; }
     .badge { background: #21262d; border-radius: 20px; padding: 1px 9px; font-size: 12px; color: #7d8590; }
     .num { font-variant-numeric: tabular-nums; }
     code { color: #79c0ff; }
-    .lang { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-    .lang a { color: #7d8590; text-decoration: none; font-size: 12px; padding: 2px 6px; border-radius: 6px; }
-    .lang a.active { color: #e6edf3; background: #21262d; }
-    .lang .sep { color: #30363d; }
-    .refresh { color: #7d8590; font-size: 12px; }
     .filterbar { padding: 8px 12px; border-bottom: 1px solid #21262d; background: #12161c; }
     .filterbar input {
       width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
       color: #e6edf3; padding: 6px 10px; font-size: 13px;
     }
     .filterbar input:focus { outline: none; border-color: #388bfd; }
+
+    @media (max-width: 720px) {
+      .app { flex-direction: column; }
+      .sidebar { width: auto; display: flex; overflow-x: auto; padding: 8px; }
+      .nav { display: flex; }
+      .brand { display: none; }
+      .summary { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🛡 Bastion</h1>
-    <span class="ver">v{{ version }}</span>
-    <nav class="lang">
-      <span class="refresh">{{ t("auto_refresh") }}</span>
-      <span class="sep">·</span>
-      <a href="/?lang=en" class="{{ 'active' if lang == 'en' else '' }}">EN</a>
-      <a href="/?lang=ko" class="{{ 'active' if lang == 'ko' else '' }}">KO</a>
-    </nav>
-  </header>
-  <main>
-    {% block content %}{% endblock %}
-  </main>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">🛡 Bastion</div>
+      <nav class="nav">
+        <a href="/" class="{{ 'active' if active == 'home' else '' }}"><span class="ico">▤</span>{{ t("nav_home") }}</a>
+        <a href="/view/banned" class="{{ 'active' if active == 'banned' else '' }}"><span class="ico">⛔</span>{{ t("panel_banned") }}</a>
+        <a href="/view/attackers" class="{{ 'active' if active == 'attackers' else '' }}"><span class="ico">🎯</span>{{ t("panel_attackers") }}</a>
+        <a href="/view/ports" class="{{ 'active' if active == 'ports' else '' }}"><span class="ico">🔌</span>{{ t("panel_ports") }}</a>
+        <a href="/view/firewall" class="{{ 'active' if active == 'firewall' else '' }}"><span class="ico">🧱</span>{{ t("panel_firewall") }}</a>
+      </nav>
+    </aside>
+
+    <div class="content">
+      <header>
+        <h1>{% block title %}Bastion{% endblock %}</h1>
+        <span class="ver">v{{ version }}</span>
+        <nav class="lang">
+          {% if active == 'home' %}<span class="refresh">{{ t("auto_refresh") }}</span><span class="sep">·</span>{% endif %}
+          <a href="?lang=en" class="{{ 'active' if lang == 'en' else '' }}">EN</a>
+          <a href="?lang=ko" class="{{ 'active' if lang == 'ko' else '' }}">KO</a>
+        </nav>
+      </header>
+      <main>
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
 
   <script>
     // Client-side row filtering that survives HTMX panel swaps.
-    // Filter text is stored per panel and re-applied after each 30s refresh.
     (function () {
       const store = {};
-
       function apply(key, panel) {
         const q = (store[key] || "").toLowerCase();
         const table = panel.querySelector("table");
@@ -76,7 +129,6 @@
           tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? "" : "none";
         });
       }
-
       document.addEventListener("input", function (e) {
         const input = e.target.closest(".filter");
         if (!input) return;
@@ -85,7 +137,6 @@
         store[key] = input.value;
         apply(key, panel);
       });
-
       document.body.addEventListener("htmx:afterSwap", function (e) {
         const panel = e.target.closest("[data-panel]");
         if (!panel) return;
@@ -95,6 +146,28 @@
         apply(key, panel);
       });
     })();
+
+    // Click-to-sort on any th[data-sort] ("num" | "text").
+    document.addEventListener("click", function (e) {
+      const th = e.target.closest("th[data-sort]");
+      if (!th) return;
+      const table = th.closest("table");
+      const tbody = table.querySelector("tbody");
+      const idx = Array.from(th.parentNode.children).indexOf(th);
+      const type = th.getAttribute("data-sort");
+      const asc = !th.__asc;
+      th.__asc = asc;
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      rows.sort(function (a, b) {
+        const x = a.children[idx].textContent.trim();
+        const y = b.children[idx].textContent.trim();
+        if (type === "num") return asc ? (parseFloat(x) || 0) - (parseFloat(y) || 0) : (parseFloat(y) || 0) - (parseFloat(x) || 0);
+        return asc ? x.localeCompare(y) : y.localeCompare(x);
+      });
+      rows.forEach(function (r) { tbody.appendChild(r); });
+      table.querySelectorAll("th[data-sort]").forEach(function (h) { h.classList.remove("sort-asc", "sort-desc"); });
+      th.classList.add(asc ? "sort-asc" : "sort-desc");
+    });
   </script>
 </body>
 </html>
