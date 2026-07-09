@@ -58,3 +58,13 @@ def test_settings_page_korean():
     c = TestClient(app)
     r = c.get("/settings?lang=ko")
     assert "알림 (ntfy)" in r.text
+
+
+def test_allowlist_page_renders():
+    # nft is absent in CI, so the list surfaces an error banner but the page
+    # (title + add form) must still render.
+    c = TestClient(app)
+    r = c.get("/view/allowlist")
+    assert r.status_code == 200
+    assert "Allowlist" in r.text
+    assert 'action="/action/allowlist/add"' in r.text

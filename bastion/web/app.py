@@ -24,7 +24,7 @@ from fastapi.templating import Jinja2Templates
 from bastion import __version__, auth, i18n, prefs
 from bastion.config import settings
 from bastion.runner import CommandError
-from bastion.services import actions, dashboard, geoip, notify
+from bastion.services import actions, allowlist, dashboard, geoip, notify
 from bastion.util import flag_emoji, port_scope
 
 log = logging.getLogger("bastion")
@@ -223,6 +223,28 @@ async def action_ban_bulk(request: Request):
     return HTMLResponse("", headers={"HX-Redirect": f"/view/attackers?ok={ok}&fail={fail}"})
 
 
+@app.post("/action/allowlist/add", response_class=HTMLResponse)
+async def action_allowlist_add(request: Request):
+    form = await request.form()
+    try:
+        allowlist.add(form.get("ip", ""))
+        return RedirectResponse("/view/allowlist", status_code=303)
+    except (ValueError, CommandError) as e:
+        return RedirectResponse(f"/view/allowlist?err={quote(str(e))}", status_code=303)
+
+
+@app.post("/action/allowlist/remove", response_class=HTMLResponse)
+async def action_allowlist_remove(request: Request):
+    form = await request.form()
+    try:
+        allowlist.remove(form.get("ip", ""))
+        return HTMLResponse("")  # HTMX removes the row on success
+    except (ValueError, CommandError) as e:
+        return HTMLResponse(
+            f'<tr><td colspan="3" class="err">{html.escape(str(e))}</td></tr>'
+        )
+
+
 @app.post("/action/unban", response_class=HTMLResponse)
 async def action_unban(request: Request):
     form = await request.form()
@@ -312,6 +334,17 @@ def view_ports(request: Request):
     return templates.TemplateResponse(
         request, "views/ports.html",
         _ctx(request, _lang(request), active="ports", ports=data or [], error=error),
+    )
+
+
+@app.get("/view/allowlist", response_class=HTMLResponse)
+def view_allowlist(request: Request):
+    entries, error = allowlist.list_entries()
+    return templates.TemplateResponse(
+        request, "views/allowlist.html",
+        _ctx(request, _lang(request), active="allowlist", entries=entries,
+             target=prefs.get("allowlist"), error=error,
+             action_error=request.query_params.get("err", "")),
     )
 
 

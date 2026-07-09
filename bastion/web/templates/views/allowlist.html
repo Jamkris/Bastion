@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ t("panel_allowlist") }}{% endblock %}
+{% block content %}
+  <section class="panel full" data-panel="allowlist-view">
+    <h2>
+      <span>{{ t("panel_allowlist") }} <span class="badge num">{{ entries|length }}</span></span>
+      <span class="muted"><code>{{ target.family }} {{ target.table }} {{ target.set }}</code></span>
+    </h2>
+
+    {% if action_error %}<div class="banner-err">{{ action_error }}</div>{% endif %}
+
+    <div style="padding:8px 16px" class="muted">{{ t("allowlist_intro") }}</div>
+
+    <form class="actbar" method="post" action="/action/allowlist/add">
+      <span class="lbl">{{ t("add_ip") }}:</span>
+      <input name="ip" type="text" placeholder="{{ t('allowlist_placeholder') }}" style="min-width:240px" required>
+      <button class="btn btn-ban" type="submit">{{ t("add_ip") }}</button>
+    </form>
+
+    {% if error %}
+      <div class="err">{{ error }}</div>
+    {% else %}
+      <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
+      <div class="body">
+        <table>
+          <thead><tr>
+            <th data-sort="num">{{ t("th_rank") }}</th>
+            <th data-sort="text">{{ t("th_entry") }}</th>
+            <th>{{ t("th_action") }}</th>
+          </tr></thead>
+          <tbody>
+            {% for e in entries %}
+              <tr>
+                <td class="num muted">{{ loop.index }}</td>
+                <td><code>{{ e }}</code></td>
+                <td>
+                  <button class="btn btn-danger"
+                          hx-post="/action/allowlist/remove"
+                          hx-vals='{"ip": "{{ e }}"}'
+                          hx-target="closest tr" hx-swap="outerHTML"
+                          hx-confirm="{{ t('confirm_remove_allow') }}">{{ t("remove") }}</button>
+                </td>
+              </tr>
+            {% endfor %}
+            {% if not entries %}
+              <tr><td colspan="3" class="muted" style="padding:16px">{{ t("allowlist_empty") }}</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
