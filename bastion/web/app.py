@@ -14,8 +14,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from bastion import __version__, i18n
-from bastion.services import dashboard
-from bastion.services import geoip
+from bastion.services import dashboard, geoip
 from bastion.util import flag_emoji, port_scope
 
 _TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
@@ -32,7 +31,6 @@ def _lang(request: Request) -> str:
 
 def _ctx(request: Request, lang: str, active: str = "", **extra) -> dict:
     return {
-        "request": request,
         "lang": lang,
         "t": i18n.translator(lang),
         "version": __version__,
@@ -47,7 +45,7 @@ def index(request: Request):
     # `?lang=` switches and is persisted as a cookie; panels inherit it.
     lang = i18n.normalize(request.query_params.get("lang") or request.cookies.get("lang"))
     response = templates.TemplateResponse(
-        "index.html", _ctx(request, lang, active="home", summary=dashboard.summary())
+        request, "index.html", _ctx(request, lang, active="home", summary=dashboard.summary())
     )
     response.set_cookie("lang", lang, max_age=31_536_000, samesite="lax")
     return response
@@ -59,7 +57,7 @@ def view_banned(request: Request):
     data, error = dashboard.banned_ips()
     summaries, _ = dashboard.jail_summaries()
     return templates.TemplateResponse(
-        "views/banned.html",
+        request, "views/banned.html",
         _ctx(request, _lang(request), active="banned", banned=data or [],
              summaries=summaries or [], error=error),
     )
@@ -70,7 +68,7 @@ def view_attackers(request: Request):
     data, error = dashboard.top_attackers()
     total = sum(a.count for a in (data or [])) or 1
     return templates.TemplateResponse(
-        "views/attackers.html",
+        request, "views/attackers.html",
         _ctx(request, _lang(request), active="attackers", attackers=data or [],
              total=total, error=error),
     )
@@ -80,7 +78,7 @@ def view_attackers(request: Request):
 def view_ports(request: Request):
     data, error = dashboard.open_ports()
     return templates.TemplateResponse(
-        "views/ports.html",
+        request, "views/ports.html",
         _ctx(request, _lang(request), active="ports", ports=data or [], error=error),
     )
 
@@ -89,7 +87,7 @@ def view_ports(request: Request):
 def view_firewall(request: Request):
     data, error = dashboard.firewall_ruleset()
     return templates.TemplateResponse(
-        "views/firewall.html",
+        request, "views/firewall.html",
         _ctx(request, _lang(request), active="firewall", ruleset=data, error=error),
     )
 
@@ -100,7 +98,7 @@ def panel_banned(request: Request):
     data, error = dashboard.banned_ips()
     summaries, _ = dashboard.jail_summaries()
     return templates.TemplateResponse(
-        "partials/banned.html",
+        request, "partials/banned.html",
         _ctx(request, _lang(request), banned=data or [], summaries=summaries or [], error=error),
     )
 
@@ -109,7 +107,7 @@ def panel_banned(request: Request):
 def panel_ports(request: Request):
     data, error = dashboard.open_ports()
     return templates.TemplateResponse(
-        "partials/ports.html", _ctx(request, _lang(request), ports=data or [], error=error)
+        request, "partials/ports.html", _ctx(request, _lang(request), ports=data or [], error=error)
     )
 
 
@@ -117,7 +115,8 @@ def panel_ports(request: Request):
 def panel_attackers(request: Request):
     data, error = dashboard.top_attackers()
     return templates.TemplateResponse(
-        "partials/attackers.html", _ctx(request, _lang(request), attackers=data or [], error=error)
+        request, "partials/attackers.html",
+        _ctx(request, _lang(request), attackers=data or [], error=error),
     )
 
 
@@ -125,7 +124,7 @@ def panel_attackers(request: Request):
 def panel_firewall(request: Request):
     data, error = dashboard.firewall_ruleset()
     return templates.TemplateResponse(
-        "partials/firewall.html", _ctx(request, _lang(request), ruleset=data, error=error)
+        request, "partials/firewall.html", _ctx(request, _lang(request), ruleset=data, error=error)
     )
 
 

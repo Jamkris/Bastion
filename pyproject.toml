@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Self-hosted fail2ban + nftables observability dashboard"
 requires-python = ">=3.10"
 dependencies = [
-    "fastapi>=0.110",
+    "fastapi>=0.115",
     "uvicorn[standard]>=0.29",
     "jinja2>=3.1",
     "geoip2>=4.8",
