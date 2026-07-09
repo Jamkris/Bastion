@@ -23,6 +23,7 @@ from fastapi.templating import Jinja2Templates
 
 from bastion import __version__, auth, i18n, prefs
 from bastion.config import settings
+from bastion.ratelimit import RateLimiter
 from bastion.runner import CommandError
 from bastion.services import actions, allowlist, dashboard, geoip, notify
 from bastion.util import flag_emoji, port_scope
@@ -157,6 +158,19 @@ def _ctx(request: Request, lang: str, active: str = "", **extra) -> dict:
 
 
 # ---------- Auth ----------
+# Per-IP brute-force protection for the login form (limits from prefs.security).
+_login_limiter = RateLimiter()
+
+
+def _client_key(request: Request) -> str:
+    """Best-effort client IP. Honors the first X-Forwarded-For hop so the limit
+    is per real client when Bastion sits behind a reverse proxy / Cloudflare."""
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
     lang = _lang(request)
@@ -165,8 +179,22 @@ def login_form(request: Request):
 
 @app.post("/login", response_class=HTMLResponse)
 async def login_submit(request: Request):
+    lang = _lang(request)
+    t = i18n.translator(lang)
+    sec = prefs.get("security")
+    key = _client_key(request)
+    now = time.time()
+    window = sec["rate_limit_window_min"] * 60
+
+    if _login_limiter.is_locked(key, now, sec["rate_limit_max_attempts"], window):
+        return templates.TemplateResponse(
+            request, "login.html", _ctx(request, lang, error=t("too_many_attempts")),
+            status_code=429,
+        )
+
     form = await request.form()
     if auth.verify_password(form.get("password"), settings.auth_password):
+        _login_limiter.clear(key)
         response = RedirectResponse("/", status_code=303)
         response.set_cookie(
             auth.COOKIE_NAME,
@@ -176,9 +204,10 @@ async def login_submit(request: Request):
             max_age=auth.COOKIE_MAX_AGE,
         )
         return response
-    lang = _lang(request)
+
+    _login_limiter.record_failure(key, now)
     return templates.TemplateResponse(
-        request, "login.html", _ctx(request, lang, error=i18n.translator(lang)("wrong_password")),
+        request, "login.html", _ctx(request, lang, error=t("wrong_password")),
         status_code=401,
     )
 

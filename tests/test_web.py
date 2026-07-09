@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
 
+from bastion.ratelimit import RateLimiter
+from bastion.web import app as webapp
 from bastion.web.app import app
 
 
@@ -58,6 +60,21 @@ def test_settings_page_korean():
     c = TestClient(app)
     r = c.get("/settings?lang=ko")
     assert "알림 (ntfy)" in r.text
+
+
+def test_login_locks_out_after_repeated_failures(monkeypatch):
+    monkeypatch.setattr(webapp, "_login_limiter", RateLimiter())
+    monkeypatch.setattr(
+        webapp.prefs, "get",
+        lambda section: {"rate_limit_max_attempts": 3, "rate_limit_window_min": 15},
+    )
+    c = TestClient(app)
+    for _ in range(3):
+        assert c.post("/login", data={"password": "wrong"}).status_code == 401
+    # Fourth attempt within the window is locked out.
+    r = c.post("/login", data={"password": "wrong"})
+    assert r.status_code == 429
+    assert "Too many attempts" in r.text
 
 
 def test_allowlist_page_renders():
