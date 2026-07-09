@@ -5,6 +5,10 @@ services:
     container_name: bastion
     restart: unless-stopped
 
+    # Pass everything in .env (e.g. BASTION_AUTH_PASSWORD) into the container.
+    env_file:
+      - .env
+
     # Host network + NET_ADMIN are required to read the host firewall/ports.
     network_mode: host
     cap_add:
