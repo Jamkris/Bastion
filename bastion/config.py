@@ -24,6 +24,9 @@ class Settings:
     # Path to a GeoLite2 Country/City .mmdb. Empty -> skip country enrichment.
     geoip_db: str = os.environ.get("BASTION_GEOIP_DB", "")
 
+    # Single shared password for the login gate. Empty -> auth disabled (open).
+    auth_password: str = os.environ.get("BASTION_AUTH_PASSWORD", "")
+
     # Command timeout in seconds.
     command_timeout: int = int(os.environ.get("BASTION_CMD_TIMEOUT", "10"))
 

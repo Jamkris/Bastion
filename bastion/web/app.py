@@ -3,19 +3,24 @@
 - Home (`/`) is an auto-refreshing overview of four HTMX panels.
 - Each category has a full detail page (`/view/*`) with a sortable, filterable table.
 - A JSON API is exposed alongside so future clients can reuse the same data.
+- A single-password login gate protects everything when BASTION_AUTH_PASSWORD is set.
 """
 
 from __future__ import annotations
 
+import logging
 import os
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from bastion import __version__, i18n
+from bastion import __version__, auth, i18n
+from bastion.config import settings
 from bastion.services import dashboard, geoip
 from bastion.util import flag_emoji, port_scope
+
+log = logging.getLogger("bastion")
 
 _TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
 templates = Jinja2Templates(directory=_TEMPLATE_DIR)
@@ -23,6 +28,25 @@ templates.env.globals["flag"] = flag_emoji
 templates.env.globals["scope"] = port_scope
 
 app = FastAPI(title="Bastion", version=__version__)
+
+# Paths reachable without authentication.
+_PUBLIC_PATHS = {"/login", "/logout", "/healthz"}
+
+if not settings.auth_password:
+    log.warning("BASTION_AUTH_PASSWORD is not set — the dashboard is OPEN (no login).")
+
+
+@app.middleware("http")
+async def auth_gate(request: Request, call_next):
+    password = settings.auth_password
+    path = request.url.path
+    if not password or path in _PUBLIC_PATHS:
+        return await call_next(request)
+    if auth.is_authenticated(request.cookies.get(auth.COOKIE_NAME), password):
+        return await call_next(request)
+    if path.startswith(("/api", "/panel")):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    return RedirectResponse("/login", status_code=303)
 
 
 def _lang(request: Request) -> str:
@@ -36,8 +60,43 @@ def _ctx(request: Request, lang: str, active: str = "", **extra) -> dict:
         "version": __version__,
         "active": active,
         "geoip_active": geoip.is_active(),
+        "auth_enabled": bool(settings.auth_password),
         **extra,
     }
+
+
+# ---------- Auth ----------
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Request):
+    lang = _lang(request)
+    return templates.TemplateResponse(request, "login.html", _ctx(request, lang, error=""))
+
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_submit(request: Request):
+    form = await request.form()
+    if auth.verify_password(form.get("password"), settings.auth_password):
+        response = RedirectResponse("/", status_code=303)
+        response.set_cookie(
+            auth.COOKIE_NAME,
+            auth.expected_token(settings.auth_password),
+            httponly=True,
+            samesite="lax",
+            max_age=auth.COOKIE_MAX_AGE,
+        )
+        return response
+    lang = _lang(request)
+    return templates.TemplateResponse(
+        request, "login.html", _ctx(request, lang, error=i18n.translator(lang)("wrong_password")),
+        status_code=401,
+    )
+
+
+@app.get("/logout")
+def logout():
+    response = RedirectResponse("/login", status_code=303)
+    response.delete_cookie(auth.COOKIE_NAME)
+    return response
 
 
 @app.get("/", response_class=HTMLResponse)

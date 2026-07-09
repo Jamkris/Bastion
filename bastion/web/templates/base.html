@@ -109,6 +109,7 @@
           {% if active == 'home' %}<span class="refresh">{{ t("auto_refresh") }}</span><span class="sep">·</span>{% endif %}
           <a href="?lang=en" class="{{ 'active' if lang == 'en' else '' }}">EN</a>
           <a href="?lang=ko" class="{{ 'active' if lang == 'ko' else '' }}">KO</a>
+          {% if auth_enabled %}<span class="sep">·</span><a href="/logout">{{ t("logout") }}</a>{% endif %}
         </nav>
       </header>
       <main>

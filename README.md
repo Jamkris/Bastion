@@ -48,6 +48,16 @@ BASTION_SUDO=true .venv/bin/uvicorn bastion.web.app:app --host 127.0.0.1 --port 
 bastion ALL=(root) NOPASSWD: /usr/sbin/nft -j list ruleset, /usr/bin/fail2ban-client status *
 ```
 
+## Authentication
+
+Set `BASTION_AUTH_PASSWORD` to require a login; the whole dashboard is then gated
+behind a single-password sign-in (session stored in an HMAC-signed cookie). Leave
+it empty to run open (dev/demo) — a warning is logged on startup. `/healthz` stays
+public for monitoring.
+
+This is a minimal gate; keep the app behind HTTPS (Cloudflare Access / VPN). A full
+user/session model can be added later on top of this.
+
 ## GeoIP (country flags)
 
 Docker builds automatically download the free **DB-IP IP-to-Country Lite** database
@@ -77,6 +87,7 @@ BASTION_DEMO=true .venv/bin/uvicorn bastion.web.app:app --reload --port 8009
 
 | Variable | Default | Description |
 |---|---|---|
+| `BASTION_AUTH_PASSWORD` | (empty) | Login password; empty = open |
 | `BASTION_SUDO` | `false` | Prefix commands with sudo |
 | `BASTION_DEMO` | `false` | Serve sample data |
 | `BASTION_JAILS` | (auto) | Jails to query, comma-separated |
