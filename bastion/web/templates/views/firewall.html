@@ -49,7 +49,7 @@
       <div class="filterbar"><input class="fw-filter" type="search" placeholder="{{ t('filter') }}"></div>
       <div class="body fw-groups">
         {% for g in rule_groups %}
-          <details class="fw-table"{% if rule_groups|length <= 3 %} open{% endif %}>
+          <details class="fw-table"{% if rule_groups|length <= 3 %} open data-open-default{% endif %}>
             <summary><code>{{ g.family }} {{ g.table }}</code> <span class="badge num">{{ g.count }}</span></summary>
             {% for ch in g.chains %}
               <div class="fw-chain">
@@ -93,7 +93,8 @@
               if (chainMatch) tableMatch = true;
             });
             det.style.display = tableMatch ? "" : "none";
-            if (q) det.open = tableMatch;
+            // Open matches while searching; restore the default state when cleared.
+            det.open = q ? tableMatch : det.hasAttribute("data-open-default");
           });
         });
       })();
