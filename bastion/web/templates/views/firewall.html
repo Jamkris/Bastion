@@ -5,7 +5,7 @@
     <section class="panel full"><div class="err">{{ error }}</div></section>
   {% elif ruleset %}
     <section class="panel full" data-panel="fw-chains" style="margin-bottom:20px">
-      <h2><span>{{ t("th_type") }}: chain <span class="badge num">{{ ruleset.chains|length }}</span></span></h2>
+      <h2><span>{{ t("panel_firewall") }} · {{ t("fw_chains") }} <span class="badge num">{{ ruleset.chains|length }}</span></span></h2>
       <div class="body"><table>
         <thead><tr>
           <th data-sort="text">{{ t("th_family_table") }}</th>
@@ -25,7 +25,7 @@
     </section>
 
     <section class="panel full" data-panel="fw-sets" style="margin-bottom:20px">
-      <h2><span>{{ t("th_type") }}: set <span class="badge num">{{ ruleset.sets|length }}</span></span></h2>
+      <h2><span>{{ t("fw_sets") }} <span class="badge num">{{ ruleset.sets|length }}</span></span></h2>
       <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
       <div class="body"><table>
         <thead><tr>
@@ -45,7 +45,7 @@
     </section>
 
     <section class="panel full" data-panel="fw-rules">
-      <h2><span>{{ t("th_type") }}: rule <span class="badge num">{{ ruleset.rules|length }}</span></span></h2>
+      <h2><span>{{ t("fw_rules") }} <span class="badge num">{{ ruleset.rules|length }}</span></span></h2>
       <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
       <div class="body"><table>
         <thead><tr>
@@ -58,7 +58,7 @@
           {% for r in ruleset.rules %}
             <tr><td>{{ r.family }}/{{ r.table }}</td><td><code>{{ r.chain }}</code></td>
               <td class="num muted">{{ r.handle }}</td>
-              <td class="muted" style="white-space:normal">{{ r.expr }}</td></tr>
+              <td><code class="rule-expr" title="{{ r.expr }}">{{ nft_expr(r.expr) }}</code></td></tr>
           {% endfor %}
         </tbody>
       </table></div>

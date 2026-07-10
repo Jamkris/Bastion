@@ -14,6 +14,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Home **trend sparklines** for banned IPs and attackers, backed by a capped
   time-series recorded by the poller. New `GET /api/history` endpoint.
 
+### Changed
+- Firewall page now renders rules in **readable nft syntax** (e.g. `tcp dport 22
+  accept`) instead of raw JSON; the original JSON is available on hover.
+
 ## [1.0.0] - 2026-07-10
 
 Initial public release.
