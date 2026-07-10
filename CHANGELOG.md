@@ -11,6 +11,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the `[DEFAULT] ignoreip` line so they survive a fail2ban restart.
 - Notifications: alert on **new attacker IPs** and on **open-port changes**, each
   independently toggleable in Settings (in addition to ban-spike alerts).
+- Home **trend sparklines** for banned IPs and attackers, backed by a capped
+  time-series recorded by the poller. New `GET /api/history` endpoint.
 
 ## [1.0.0] - 2026-07-10
 

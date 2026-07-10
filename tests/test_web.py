@@ -87,6 +87,26 @@ def test_settings_is_standalone_page():
     assert 'class="sidebar"' not in r.text
 
 
+def test_api_history_returns_points_list():
+    c = TestClient(app)
+    r = c.get("/api/history?limit=10")
+    assert r.status_code == 200
+    assert isinstance(r.json().get("points"), list)
+
+
+def test_home_renders_with_sparkline_context(monkeypatch):
+    # With history present, the home page includes an SVG sparkline.
+    monkeypatch.setattr(
+        webapp.history, "load",
+        lambda limit=None: [{"t": 1, "banned": 1, "attackers": 2, "ports": 3},
+                            {"t": 2, "banned": 4, "attackers": 5, "ports": 3}],
+    )
+    c = TestClient(app)
+    r = c.get("/")
+    assert r.status_code == 200
+    assert '<svg class="spark"' in r.text
+
+
 def test_dashboard_has_profile_menu():
     c = TestClient(app)
     r = c.get("/")

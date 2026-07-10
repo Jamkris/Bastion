@@ -19,3 +19,25 @@ def port_scope(local_address: str) -> str:
     if local_address.startswith("127.") or local_address == "::1":
         return "local"
     return "specific"
+
+
+def sparkline_points(values, width: int = 120, height: int = 28, pad: int = 3) -> str:
+    """Map a series of numbers to an SVG polyline `points` string. Pure and
+    dependency-free so trends render server-side without a charting library.
+    Returns "" for an empty series; a flat line sits at the vertical middle."""
+    nums = [float(v) for v in values]
+    if not nums:
+        return ""
+    if len(nums) == 1:
+        nums = nums * 2
+    lo, hi = min(nums), max(nums)
+    span = hi - lo
+    step = (width - 2 * pad) / (len(nums) - 1)
+    mid = height / 2
+    coords = []
+    for i, v in enumerate(nums):
+        x = pad + i * step
+        # Invert y (SVG origin is top-left); flat series -> mid line.
+        y = mid if span == 0 else (height - pad) - (v - lo) / span * (height - 2 * pad)
+        coords.append(f"{x:.1f},{y:.1f}")
+    return " ".join(coords)
