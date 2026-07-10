@@ -56,6 +56,15 @@
 
     .banner-ok { padding: 10px 12px; border: 1px solid #238636; background: #12261a; color: #56d364; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
     .banner-err { padding: 10px 12px; border: 1px solid #6e2831; background: #3d1a1f; color: #ff7b72; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
+
+    @media (max-width: 560px) {
+      .wrap { padding: 16px 14px 48px; }
+      .row2 { grid-template-columns: 1fr; }
+      .sbar { flex-wrap: wrap; gap: 8px; }
+      .sbar .ver { margin-left: 0; }
+      .langpick { flex-wrap: wrap; }
+      .btn { flex: 1; text-align: center; }
+    }
   </style>
 </head>
 <body>
