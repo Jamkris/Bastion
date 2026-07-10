@@ -52,6 +52,10 @@ class Settings:
     # Mount this as a volume in Docker so settings survive container restarts.
     data_dir: str = os.environ.get("BASTION_DATA_DIR", "data")
 
+    # fail2ban config file whose [DEFAULT] ignoreip is edited for persistent
+    # allowlist entries. Must be mounted read-write for persistence to work.
+    jail_local: str = os.environ.get("BASTION_JAIL_LOCAL", "/etc/fail2ban/jail.local")
+
     # Command timeout in seconds.
     command_timeout: int = int(os.environ.get("BASTION_CMD_TIMEOUT", "10"))
 

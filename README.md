@@ -98,7 +98,8 @@ take effect immediately.
 - **Allowlist** — two modes:
   - **fail2ban ignoreip** (default) — trusted IPs fail2ban will never ban, managed
     per jail over the fail2ban socket. Works with any firewall (UFW/iptables/nftables).
-    Live changes are not written back to `jail.local` — put permanent entries there.
+    Changes apply live; enable **Persist to jail.local** in Settings to also write
+    them to `jail.local` so they survive a fail2ban restart (mount it read-write).
   - **nftables set** — manage IPs in a dedicated nftables set (`family` / `table` /
     `set`). The set must exist in your ruleset (a first-run guide + *Create set*
     button helps). Manage entries on the **✅ Allowlist** page either way.

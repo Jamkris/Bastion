@@ -143,6 +143,11 @@
               <option value="nftset" {% if a.mode == 'nftset' %}selected{% endif %}>{{ t("mode_nftset") }}</option>
             </select>
           </div>
+          <div class="field check">
+            <input type="checkbox" id="a_persist" name="persist" {% if a.persist %}checked{% endif %}>
+            <label for="a_persist">{{ t("lbl_persist") }}</label>
+          </div>
+          <p class="hint">{{ t("hint_persist") }}</p>
           <div class="row2">
             <div class="field">
               <label for="a_family">{{ t("lbl_family") }}</label>
