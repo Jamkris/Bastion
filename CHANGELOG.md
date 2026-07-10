@@ -22,6 +22,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   accept`) instead of raw JSON; the original JSON is available on hover.
 - Firewall rules are **grouped by table → chain** in collapsible sections, with a
   filter that auto-opens matching groups (much easier on large rulesets).
+- **Top Attackers** now excludes IPs that are already banned — the list focuses
+  on active threats you may still want to act on.
+- **Banned IPs** gained an **Attempts** column showing each IP's failed-login
+  count from the auth log.
 
 ## [1.0.0] - 2026-07-10
 

@@ -35,6 +35,7 @@
             <th data-sort="text">{{ t("th_ip") }}</th>
             <th data-sort="text">{{ t("th_country") }}</th>
             <th data-sort="text">{{ t("th_jail") }}</th>
+            <th data-sort="num">{{ t("th_attempts") }}</th>
             <th>{{ t("th_action") }}</th>
           </tr></thead>
           <tbody>
@@ -44,6 +45,7 @@
                 <td>{{ b.ip }}</td>
                 <td>{{ flag(b.country) }} {{ b.country or "—" }}</td>
                 <td>{{ b.jail }}</td>
+                <td class="num">{{ b.count or "—" }}</td>
                 <td>
                   <button class="btn btn-danger"
                           hx-post="/action/unban"

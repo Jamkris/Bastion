@@ -152,6 +152,21 @@ def test_multiuser_api_basic_auth(one_user):
     assert c.get("/api/stats", auth=(user, pw)).status_code == 200
 
 
+def test_banned_view_shows_attempts_column(monkeypatch):
+    from bastion.models import BannedIP
+
+    monkeypatch.setattr(
+        webapp.dashboard, "banned_ips",
+        lambda: ([BannedIP(ip="203.0.113.7", jail="sshd", country="US", count=42)], None),
+    )
+    monkeypatch.setattr(webapp.dashboard, "jail_summaries", lambda: ([], None))
+    c = TestClient(app)
+    r = c.get("/view/banned")
+    assert r.status_code == 200
+    assert "Attempts" in r.text
+    assert "42" in r.text
+
+
 def test_firewall_grouped_view(monkeypatch):
     from bastion.models import FirewallRule, FirewallRuleset
 

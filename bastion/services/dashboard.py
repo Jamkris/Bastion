@@ -31,14 +31,37 @@ def jail_summaries():
     return _safe(_)
 
 
+def _attempt_counts():
+    """Best-effort auth-log attempt counts; empty if the log is unavailable."""
+    try:
+        return p_attackers.attempt_counts(authlog.raw_auth_log())
+    except Exception:  # noqa: BLE001 — attempts are supplementary, never fatal
+        return {}
+
+
+def _current_banned_ips() -> set[str]:
+    """Best-effort set of all currently-banned IPs across jails."""
+    try:
+        jails = p_fail2ban.parse_jail_list(fail2ban.raw_jail_list())
+        ips: set[str] = set()
+        for jail in jails:
+            status = p_fail2ban.parse_jail_status(fail2ban.raw_jail_status(jail))
+            ips.update(status.banned_ips)
+        return ips
+    except Exception:  # noqa: BLE001 — exclusion is best-effort
+        return set()
+
+
 def banned_ips():
     def _():
+        counts = _attempt_counts()
         jails = p_fail2ban.parse_jail_list(fail2ban.raw_jail_list())
         out: list[BannedIP] = []
         for jail in jails:
             status = p_fail2ban.parse_jail_status(fail2ban.raw_jail_status(jail))
             for ip in status.banned_ips:
-                out.append(BannedIP(ip=ip, jail=jail, country=country_of(ip)))
+                out.append(BannedIP(ip=ip, jail=jail, country=country_of(ip),
+                                    count=counts.get(ip, 0)))
         return out
 
     return _safe(_)
@@ -50,7 +73,9 @@ def open_ports():
 
 def top_attackers():
     def _():
-        stats = p_attackers.parse_attackers(authlog.raw_auth_log())
+        # Drop IPs that are already banned — no point re-listing them here.
+        banned = _current_banned_ips()
+        stats = p_attackers.parse_attackers(authlog.raw_auth_log(), exclude=banned)
         return [AttackerStat(ip=s.ip, count=s.count, country=country_of(s.ip)) for s in stats]
 
     return _safe(_)
