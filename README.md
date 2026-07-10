@@ -26,6 +26,8 @@ English · [한국어](#-한국어)
 - **Open ports** — listening sockets from `ss -tlnp` with the owning process
 - **Firewall rules** — chains, rules and sets from `nft -j list ruleset`
 - Client-side search/filter and click-to-sort on every table; 30s live refresh (HTMX)
+- **Trend sparklines** on the home page for banned IPs and attackers (recorded
+  over time; also available as JSON at `GET /api/history`)
 
 **Management**
 - **Ban / unban** any IP through `fail2ban-client`, with SweetAlert2 confirmations
@@ -141,7 +143,8 @@ counters handy for dashboards:
 { "total_banned": 12, "jail_count": 2, "open_ports": 9, "attackers": 34 }
 ```
 
-Also available: `/api/banned`, `/api/attackers`, `/api/ports` (each `{data, error}`).
+Also available: `/api/banned`, `/api/attackers`, `/api/ports` (each `{data, error}`)
+and `/api/history?limit=N` (recorded counter time-series).
 
 Header-only clients can't do the cookie login, so the API also accepts **HTTP
 Basic auth** — any username, the password being `BASTION_AUTH_PASSWORD`.

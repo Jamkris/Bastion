@@ -21,12 +21,12 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from bastion import __version__, auth, i18n, prefs
+from bastion import __version__, auth, history, i18n, prefs
 from bastion.config import settings
 from bastion.ratelimit import RateLimiter
 from bastion.runner import CommandError
 from bastion.services import actions, allowlist, dashboard, geoip, ignoreip, notify
-from bastion.util import flag_emoji, port_scope
+from bastion.util import flag_emoji, port_scope, sparkline_points
 
 log = logging.getLogger("bastion")
 
@@ -35,6 +35,7 @@ _STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 templates = Jinja2Templates(directory=_TEMPLATE_DIR)
 templates.env.globals["flag"] = flag_emoji
 templates.env.globals["scope"] = port_scope
+templates.env.globals["sparkline"] = sparkline_points
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
@@ -174,10 +175,17 @@ def _poll_port_changes_once() -> None:
         )
 
 
+def _record_history_once(now: float) -> None:
+    """Append current counters to the time-series (independent of alerts)."""
+    s = dashboard.summary()
+    history.record(s["total_banned"], s["attackers"], s["open_ports"], ts=now)
+
+
 def _poll_once(now: float) -> None:
     _poll_bans_once(now)
     _poll_new_attackers_once()
     _poll_port_changes_once()
+    _record_history_once(now)
 
 
 async def _alert_loop() -> None:
@@ -431,9 +439,12 @@ async def settings_save(request: Request, section: str):
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     # `?lang=` is honored here and persisted as a cookie by the lang middleware.
+    hist = history.load(60)  # ~last hour of trend for the sparklines
     return templates.TemplateResponse(
         request, "index.html",
-        _ctx(request, _lang(request), active="home", summary=dashboard.summary()),
+        _ctx(request, _lang(request), active="home", summary=dashboard.summary(),
+             spark_banned=[h["banned"] for h in hist],
+             spark_attackers=[h["attackers"] for h in hist]),
     )
 
 
@@ -559,6 +570,12 @@ def api_stats():
     # Flat counters for dashboard widgets (e.g. Homepage customapi):
     # {total_banned, jail_count, open_ports, attackers}.
     return dashboard.summary()
+
+
+@app.get("/api/history")
+def api_history(limit: int = 60):
+    # Recorded counter time-series: {points: [{t, banned, attackers, ports}]}.
+    return {"points": history.load(max(1, min(limit, history.MAX_POINTS)))}
 
 
 @app.get("/favicon.ico", include_in_schema=False)

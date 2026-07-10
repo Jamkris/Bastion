@@ -145,5 +145,21 @@ def test_poll_once_runs_all_detectors(reset_poller, monkeypatch):
     _banned(monkeypatch, [])
     _attackers(monkeypatch, [])
     _ports(monkeypatch, [])
+    monkeypatch.setattr(webapp.history, "record", lambda *a, **k: None)
     webapp._poll_once(now=1000.0)  # primes all three, no alerts
     assert reset_poller == []
+
+
+def test_poll_records_history(reset_poller, monkeypatch):
+    _prefs(monkeypatch)  # notifications off is irrelevant; history always records
+    monkeypatch.setattr(
+        webapp.dashboard, "summary",
+        lambda: {"total_banned": 7, "attackers": 3, "open_ports": 9, "jail_count": 2},
+    )
+    recorded = []
+    monkeypatch.setattr(
+        webapp.history, "record",
+        lambda banned, attackers, ports, *, ts: recorded.append((banned, attackers, ports, ts)),
+    )
+    webapp._record_history_once(now=1234.0)
+    assert recorded == [(7, 3, 9, 1234.0)]
