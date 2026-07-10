@@ -38,6 +38,9 @@ DEFAULTS: dict[str, dict[str, Any]] = {
         # "ignoreip" -> manage fail2ban ignoreip (works with any firewall);
         # "nftset"   -> manage a dedicated nftables set.
         "mode": "ignoreip",
+        # When true (ignoreip mode), also write changes to jail.local [DEFAULT]
+        # so they survive a fail2ban restart. Requires jail.local mounted rw.
+        "persist": False,
         "family": "inet",
         "table": "filter",
         "set": "bastion_allow",

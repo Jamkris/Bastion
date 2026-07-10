@@ -20,8 +20,9 @@ import ipaddress
 import logging
 import re
 
+from bastion import prefs
 from bastion.runner import CommandError, run
-from bastion.services import dashboard
+from bastion.services import dashboard, jaillocal
 
 log = logging.getLogger("bastion.ignoreip")
 
@@ -88,15 +89,23 @@ def list_all() -> tuple[list[dict], str | None]:
     return result, None
 
 
+def _persist_enabled() -> bool:
+    return bool(prefs.get("allowlist").get("persist"))
+
+
 def add(jail: str, ip: str) -> None:
     _validate_jail(jail)
     canonical = normalize_ip(ip)
-    run(["fail2ban-client", "set", jail, "addignoreip", canonical])
-    log.info("ignoreip add jail=%s ip=%s", jail, canonical)
+    run(["fail2ban-client", "set", jail, "addignoreip", canonical])  # immediate
+    if _persist_enabled():
+        jaillocal.persist_add(canonical)  # durable; best-effort, never raises
+    log.info("ignoreip add jail=%s ip=%s persist=%s", jail, canonical, _persist_enabled())
 
 
 def remove(jail: str, ip: str) -> None:
     _validate_jail(jail)
     canonical = normalize_ip(ip)
-    run(["fail2ban-client", "set", jail, "delignoreip", canonical])
-    log.info("ignoreip remove jail=%s ip=%s", jail, canonical)
+    run(["fail2ban-client", "set", jail, "delignoreip", canonical])  # immediate
+    if _persist_enabled():
+        jaillocal.persist_remove(canonical)  # durable; best-effort, never raises
+    log.info("ignoreip remove jail=%s ip=%s persist=%s", jail, canonical, _persist_enabled())

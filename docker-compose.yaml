@@ -26,6 +26,9 @@ services:
       - /var/log:/var/log:ro
       # persisted user preferences from the Settings page (survives restarts)
       - bastion_data:/app/data
+      # jail.local (read-write) — only for the "Persist to jail.local" allowlist
+      # option, so ignoreip entries survive a fail2ban restart.
+      # - /etc/fail2ban/jail.local:/etc/fail2ban/jail.local
       # GeoIP DB (optional)
       # - /path/to/geoip:/geoip:ro
 

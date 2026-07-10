@@ -77,3 +77,30 @@ def test_list_all_reports_jail_listing_error(monkeypatch):
     data, error = ignoreip.list_all()
     assert data == []
     assert error == "socket down"
+
+
+def test_add_persists_when_enabled(monkeypatch):
+    monkeypatch.setattr(ignoreip, "run", lambda cmd: "")
+    monkeypatch.setattr(ignoreip.prefs, "get", lambda section: {"persist": True})
+    persisted = []
+    monkeypatch.setattr(ignoreip.jaillocal, "persist_add", lambda ip: persisted.append(ip))
+    ignoreip.add("sshd", "1.2.3.4")
+    assert persisted == ["1.2.3.4"]
+
+
+def test_add_does_not_persist_when_disabled(monkeypatch):
+    monkeypatch.setattr(ignoreip, "run", lambda cmd: "")
+    monkeypatch.setattr(ignoreip.prefs, "get", lambda section: {"persist": False})
+    persisted = []
+    monkeypatch.setattr(ignoreip.jaillocal, "persist_add", lambda ip: persisted.append(ip))
+    ignoreip.add("sshd", "1.2.3.4")
+    assert persisted == []
+
+
+def test_remove_persists_when_enabled(monkeypatch):
+    monkeypatch.setattr(ignoreip, "run", lambda cmd: "")
+    monkeypatch.setattr(ignoreip.prefs, "get", lambda section: {"persist": True})
+    persisted = []
+    monkeypatch.setattr(ignoreip.jaillocal, "persist_remove", lambda ip: persisted.append(ip))
+    ignoreip.remove("sshd", "1.2.3.4")
+    assert persisted == ["1.2.3.4"]
