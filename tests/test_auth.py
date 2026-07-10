@@ -1,6 +1,13 @@
 import base64
 
-from bastion.auth import expected_token, is_authenticated, verify_basic, verify_password
+from bastion.auth import (
+    expected_token,
+    is_authenticated,
+    sign_session,
+    verify_basic,
+    verify_password,
+    verify_session,
+)
 
 
 def _basic(user, pw):
@@ -54,3 +61,21 @@ def test_verify_basic_rejects_malformed_or_missing():
     assert verify_basic("Bearer token", "secret") is False
     assert verify_basic("Basic !!!notbase64", "secret") is False
     assert verify_basic(_basic("u", "secret"), "") is False  # no password configured
+
+
+def test_session_roundtrip():
+    token = sign_session("alice", "server-secret")
+    assert verify_session(token, "server-secret") == "alice"
+
+
+def test_session_rejects_tampered_or_wrong_secret():
+    token = sign_session("alice", "server-secret")
+    assert verify_session(token, "other-secret") is None
+    assert verify_session("alice.deadbeef", "server-secret") is None
+    assert verify_session("admin." + token.split(".")[1], "server-secret") is None
+
+
+def test_session_rejects_malformed():
+    assert verify_session(None, "s") is None
+    assert verify_session("nodot", "s") is None
+    assert verify_session(".sig", "s") is None

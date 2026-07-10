@@ -76,6 +76,7 @@
     </header>
 
     {% if saved %}<div class="banner-ok">{{ t("settings_saved") }}</div>{% endif %}
+    {% if err %}<div class="banner-err">{{ err }}</div>{% endif %}
     {% if test_result == "ok" %}<div class="banner-ok">{{ t("test_sent") }}</div>{% endif %}
     {% if test_result == "fail" %}<div class="banner-err">{{ t("test_failed") }}</div>{% endif %}
 
@@ -199,6 +200,69 @@
             <button type="submit" class="btn btn-primary">{{ t("btn_save") }}</button>
           </div>
         </form>
+      </section>
+
+      <!-- Users -->
+      <section class="panel">
+        <h2>{{ t("sec_users") }}</h2>
+        <div class="body">
+          <p class="hint">{{ t("sec_users_hint") }}</p>
+
+          {% if users_list %}
+            <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+              {% for u in users_list %}
+                <tr style="border-bottom:1px solid #21262d">
+                  <td style="padding:6px 0"><code>{{ u }}</code></td>
+                  <td style="padding:6px 0;text-align:right">
+                    <form method="post" action="/settings/users/remove" style="display:inline"
+                          onsubmit="return confirm('{{ t('remove') }} {{ u }}?')">
+                      <input type="hidden" name="username" value="{{ u }}">
+                      <button type="submit" class="btn btn-danger">{{ t("remove") }}</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </table>
+          {% else %}
+            <p class="hint">{{ t("no_users") }}</p>
+          {% endif %}
+
+          <form method="post" action="/settings/users/add" style="margin-bottom:16px">
+            <div class="row2">
+              <div class="field">
+                <label for="u_name">{{ t("username") }}</label>
+                <input type="text" id="u_name" name="username" autocomplete="off" required>
+              </div>
+              <div class="field">
+                <label for="u_pass">{{ t("password") }}</label>
+                <input type="password" id="u_pass" name="password" autocomplete="new-password" required>
+              </div>
+            </div>
+            <div class="formactions">
+              <button type="submit" class="btn btn-primary">{{ t("add_user") }}</button>
+            </div>
+          </form>
+
+          {% if users_list %}
+            <form method="post" action="/settings/users/password">
+              <div class="row2">
+                <div class="field">
+                  <label for="u_cname">{{ t("change_password") }}</label>
+                  <select id="u_cname" name="username">
+                    {% for u in users_list %}<option value="{{ u }}">{{ u }}</option>{% endfor %}
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="u_cpass">{{ t("password") }}</label>
+                  <input type="password" id="u_cpass" name="password" autocomplete="new-password" required>
+                </div>
+              </div>
+              <div class="formactions">
+                <button type="submit" class="btn">{{ t("change_password") }}</button>
+              </div>
+            </form>
+          {% endif %}
+        </div>
       </section>
     </div>
   </div>

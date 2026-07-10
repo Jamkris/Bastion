@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from bastion.ratelimit import RateLimiter
@@ -105,6 +106,50 @@ def test_home_renders_with_sparkline_context(monkeypatch):
     r = c.get("/")
     assert r.status_code == 200
     assert '<svg class="spark"' in r.text
+
+
+@pytest.fixture
+def one_user(monkeypatch):
+    from bastion import users as u
+    monkeypatch.setattr(webapp, "_login_limiter", RateLimiter())
+    u.add("alice", "pw12345")
+    yield ("alice", "pw12345")
+    u.remove("alice")
+
+
+def test_multiuser_requires_login(one_user):
+    c = TestClient(app)
+    r = c.get("/", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/login"
+
+
+def test_multiuser_login_page_has_username_field(one_user):
+    c = TestClient(app)
+    assert 'name="username"' in c.get("/login").text
+
+
+def test_multiuser_login_success_grants_access(one_user):
+    user, pw = one_user
+    c = TestClient(app)
+    r = c.post("/login", data={"username": user, "password": pw}, follow_redirects=False)
+    assert r.status_code == 303
+    assert "bastion_user" in r.headers.get("set-cookie", "")
+    assert c.get("/", follow_redirects=False).status_code == 200
+
+
+def test_multiuser_wrong_password_401(one_user):
+    user, _ = one_user
+    c = TestClient(app)
+    r = c.post("/login", data={"username": user, "password": "nope"}, follow_redirects=False)
+    assert r.status_code == 401
+
+
+def test_multiuser_api_basic_auth(one_user):
+    user, pw = one_user
+    c = TestClient(app)
+    assert c.get("/api/stats", follow_redirects=False).status_code == 401
+    assert c.get("/api/stats", auth=(user, pw)).status_code == 200
 
 
 def test_dashboard_has_profile_menu():

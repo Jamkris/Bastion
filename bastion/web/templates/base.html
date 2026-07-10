@@ -66,6 +66,10 @@
     }
     .profile .menu a:hover { background: #1c2128; }
     .profile .menu .ico { width: 16px; text-align: center; color: #7d8590; }
+    .profile .menu-user {
+      padding: 6px 10px 8px; margin-bottom: 4px; border-bottom: 1px solid #21262d;
+      color: #7d8590; font-size: 12px; word-break: break-all;
+    }
 
     /* Summary bar */
     .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -185,6 +189,7 @@
         <div class="profile" id="profile">
           <button type="button" class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" title="{{ t('menu') }}">👤</button>
           <div class="menu" role="menu">
+            {% if current_user %}<div class="menu-user">{{ current_user }}</div>{% endif %}
             <a href="/settings" role="menuitem"><span class="ico">⚙</span>{{ t("nav_settings") }}</a>
             {% if auth_enabled %}<a href="/logout" role="menuitem"><span class="ico">⎋</span>{{ t("logout") }}</a>{% endif %}
           </div>

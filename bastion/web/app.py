@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from bastion import __version__, auth, history, i18n, prefs
+from bastion import __version__, auth, history, i18n, prefs, secretkey, users
 from bastion.config import settings
 from bastion.ratelimit import RateLimiter
 from bastion.runner import CommandError
@@ -54,8 +54,30 @@ app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 # Paths reachable without authentication.
 _PUBLIC_PATHS = {"/login", "/logout", "/healthz", "/favicon.ico"}
 
-if not settings.auth_password:
-    log.warning("BASTION_AUTH_PASSWORD is not set — the dashboard is OPEN (no login).")
+if not settings.auth_password and users.count() == 0:
+    log.warning("No users and no BASTION_AUTH_PASSWORD — the dashboard is OPEN (no login).")
+
+
+def _request_authenticated(request: Request) -> bool:
+    """Multi-user mode (any user exists) takes precedence; otherwise fall back
+    to the single shared password; otherwise the dashboard is open."""
+    if users.count() > 0:
+        if auth.verify_session(request.cookies.get(auth.USER_COOKIE), secretkey.get()):
+            return True
+        creds = auth.decode_basic(request.headers.get("authorization"))
+        return bool(creds and users.verify(creds[0], creds[1]))
+    password = settings.auth_password
+    if not password:
+        return True
+    if auth.is_authenticated(request.cookies.get(auth.COOKIE_NAME), password):
+        return True
+    return auth.verify_basic(request.headers.get("authorization"), password)
+
+
+def _current_user(request: Request) -> str | None:
+    if users.count() == 0:
+        return None
+    return auth.verify_session(request.cookies.get(auth.USER_COOKIE), secretkey.get())
 
 
 # ---------- Intrusion alerting (background poller) ----------
@@ -201,14 +223,10 @@ async def _alert_loop() -> None:
 
 @app.middleware("http")
 async def auth_gate(request: Request, call_next):
-    password = settings.auth_password
     path = request.url.path
-    if not password or path in _PUBLIC_PATHS or path.startswith("/static/"):
+    if path in _PUBLIC_PATHS or path.startswith("/static/"):
         return await call_next(request)
-    if auth.is_authenticated(request.cookies.get(auth.COOKIE_NAME), password):
-        return await call_next(request)
-    # Header-only clients (Homepage/customapi, scripts) can use HTTP Basic auth.
-    if auth.verify_basic(request.headers.get("authorization"), password):
+    if _request_authenticated(request):
         return await call_next(request)
     if path.startswith(("/api", "/panel", "/action")):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
@@ -237,7 +255,9 @@ def _ctx(request: Request, lang: str, active: str = "", **extra) -> dict:
         "version": __version__,
         "active": active,
         "geoip_active": geoip.is_active(),
-        "auth_enabled": bool(settings.auth_password),
+        "auth_enabled": bool(settings.auth_password) or users.count() > 0,
+        "multi_user": users.count() > 0,
+        "current_user": _current_user(request),
         **extra,
     }
 
@@ -278,15 +298,13 @@ async def login_submit(request: Request):
         )
 
     form = await request.form()
-    if auth.verify_password(form.get("password"), settings.auth_password):
+    ok, cookie_name, cookie_value = _check_login(form)
+    if ok:
         _login_limiter.clear(key)
         response = RedirectResponse("/", status_code=303)
         response.set_cookie(
-            auth.COOKIE_NAME,
-            auth.expected_token(settings.auth_password),
-            httponly=True,
-            samesite="lax",
-            max_age=auth.COOKIE_MAX_AGE,
+            cookie_name, cookie_value,
+            httponly=True, samesite="lax", max_age=auth.COOKIE_MAX_AGE,
         )
         return response
 
@@ -297,10 +315,24 @@ async def login_submit(request: Request):
     )
 
 
+def _check_login(form) -> tuple[bool, str, str]:
+    """Validate credentials. Multi-user mode uses username+password and issues a
+    signed session cookie; otherwise the single shared password is checked."""
+    if users.count() > 0:
+        username = form.get("username", "")
+        if users.verify(username, form.get("password", "")):
+            return True, auth.USER_COOKIE, auth.sign_session(username, secretkey.get())
+        return False, "", ""
+    if auth.verify_password(form.get("password"), settings.auth_password):
+        return True, auth.COOKIE_NAME, auth.expected_token(settings.auth_password)
+    return False, "", ""
+
+
 @app.get("/logout")
 def logout():
     response = RedirectResponse("/login", status_code=303)
     response.delete_cookie(auth.COOKIE_NAME)
+    response.delete_cookie(auth.USER_COOKIE)
     return response
 
 
@@ -412,7 +444,9 @@ def settings_page(request: Request):
         request, "views/settings.html",
         _ctx(request, _lang(request), active="settings",
              n=p["notifications"], a=p["allowlist"], s=p["security"],
+             users_list=users.usernames(),
              saved=request.query_params.get("saved"),
+             err=request.query_params.get("err"),
              test_result=request.query_params.get("test")),
     )
 
@@ -426,6 +460,33 @@ async def settings_test_notify(request: Request):
         "Bastion test", "Notifications are working.", tags="white_check_mark", n=n
     )
     return RedirectResponse(f"/settings?test={'ok' if ok else 'fail'}", status_code=303)
+
+
+@app.post("/settings/users/add")
+async def settings_users_add(request: Request):
+    form = await request.form()
+    try:
+        users.add(form.get("username", ""), form.get("password", ""))
+    except ValueError as e:
+        return RedirectResponse(f"/settings?err={quote(str(e))}", status_code=303)
+    return RedirectResponse("/settings?saved=users", status_code=303)
+
+
+@app.post("/settings/users/password")
+async def settings_users_password(request: Request):
+    form = await request.form()
+    try:
+        users.set_password(form.get("username", ""), form.get("password", ""))
+    except ValueError as e:
+        return RedirectResponse(f"/settings?err={quote(str(e))}", status_code=303)
+    return RedirectResponse("/settings?saved=users", status_code=303)
+
+
+@app.post("/settings/users/remove")
+async def settings_users_remove(request: Request):
+    form = await request.form()
+    users.remove(form.get("username", ""))
+    return RedirectResponse("/settings?saved=users", status_code=303)
 
 
 @app.post("/settings/{section}")
