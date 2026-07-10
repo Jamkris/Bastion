@@ -60,6 +60,29 @@ def test_add_rejects_bad_ip(monkeypatch):
         allowlist.add("; rm -rf /")
 
 
+def test_set_missing_detects_not_found():
+    assert allowlist.set_missing("Error: No such file or directory") is True
+    assert allowlist.set_missing("set does not exist") is True
+    assert allowlist.set_missing(None) is False
+    assert allowlist.set_missing("Operation not permitted") is False
+
+
+def test_create_set_builds_expected_command(monkeypatch):
+    calls = []
+    monkeypatch.setattr(allowlist, "run", lambda cmd: calls.append(cmd) or "")
+    allowlist.create_set()
+    assert calls == [[
+        "nft", "add", "set", "inet", "filter", "bastion_allow",
+        "{ type ipv4_addr; flags interval; }",
+    ]]
+
+
+def test_create_set_rejects_bad_type(monkeypatch):
+    monkeypatch.setattr(allowlist, "run", lambda cmd: "")
+    with pytest.raises(ValueError):
+        allowlist.create_set("evil_type")
+
+
 def test_list_entries_returns_error_on_missing_set(monkeypatch):
     from bastion.runner import CommandError
 

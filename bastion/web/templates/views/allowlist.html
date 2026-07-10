@@ -11,15 +11,39 @@
 
     <div style="padding:8px 16px" class="muted">{{ t("allowlist_intro") }}</div>
 
-    <form class="actbar" method="post" action="/action/allowlist/add">
-      <span class="lbl">{{ t("add_ip") }}:</span>
-      <input name="ip" type="text" placeholder="{{ t('allowlist_placeholder') }}" style="min-width:240px" required>
-      <button class="btn btn-ban" type="submit">{{ t("add_ip") }}</button>
-    </form>
-
     {% if error %}
-      <div class="err">{{ error }}</div>
+      {% if missing %}
+        <div class="setup">
+          <h3>{{ t("allowlist_setup_title") }}</h3>
+          <p class="muted">{{ t("allowlist_setup_intro") }}</p>
+          <ol>
+            <li>{{ t("allowlist_step_find") }}
+              <pre>nft list tables</pre>
+            </li>
+            <li>{{ t("allowlist_step_configure") }}</li>
+            <li>{{ t("allowlist_step_create") }}
+              <pre>nft add set {{ target.family }} {{ target.table }} {{ target.set }} { type ipv4_addr\; flags interval\; }</pre>
+              <form method="post" action="/action/allowlist/create" style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <button class="btn btn-ban" type="submit">{{ t("allowlist_create_set") }}</button>
+                <span class="muted" style="font-size:12px">{{ t("allowlist_create_note") }}</span>
+              </form>
+            </li>
+            <li>{{ t("allowlist_step_rule") }}
+              <pre>nft add rule {{ target.family }} {{ target.table }} input ip saddr @{{ target.set }} accept</pre>
+            </li>
+          </ol>
+          <div class="err" style="margin-top:4px">{{ error }}</div>
+        </div>
+      {% else %}
+        <div class="err">{{ error }}</div>
+      {% endif %}
     {% else %}
+      <form class="actbar" method="post" action="/action/allowlist/add">
+        <span class="lbl">{{ t("add_ip") }}:</span>
+        <input name="ip" type="text" placeholder="{{ t('allowlist_placeholder') }}" style="min-width:240px" required>
+        <button class="btn btn-ban" type="submit">{{ t("add_ip") }}</button>
+      </form>
+
       <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
       <div class="body">
         <table>

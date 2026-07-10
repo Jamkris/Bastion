@@ -103,10 +103,10 @@ def test_login_locks_out_after_repeated_failures(monkeypatch):
 
 
 def test_allowlist_page_renders():
-    # nft is absent in CI, so the list surfaces an error banner but the page
-    # (title + add form) must still render.
+    # nft is absent in CI, so the list surfaces a "not found" error, which the
+    # page turns into the first-run setup guide (create-set form).
     c = TestClient(app)
     r = c.get("/view/allowlist")
     assert r.status_code == 200
     assert "Allowlist" in r.text
-    assert 'action="/action/allowlist/add"' in r.text
+    assert 'action="/action/allowlist/create"' in r.text

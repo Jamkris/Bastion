@@ -57,6 +57,18 @@ def parse_elements(raw: str) -> list[str]:
     return []
 
 
+_SET_TYPES = {"ipv4_addr", "ipv6_addr"}
+
+
+def set_missing(error: str | None) -> bool:
+    """True when an error means the target set/table does not exist yet
+    (as opposed to a permission or syntax problem)."""
+    if not error:
+        return False
+    e = error.lower()
+    return "no such file" in e or "does not exist" in e or "doesn't exist" in e
+
+
 def list_entries() -> tuple[list[str], str | None]:
     """Return (entries, error). A missing set surfaces as an error string."""
     family, table, name = _target()
@@ -66,6 +78,19 @@ def list_entries() -> tuple[list[str], str | None]:
         return parse_elements(raw), None
     except (ValueError, CommandError) as e:
         return [], str(e)
+
+
+def create_set(set_type: str = "ipv4_addr") -> None:
+    """Create the configured set (convenience for first-time setup).
+    The target table must already exist. `flags interval` lets the set hold
+    both single addresses and CIDR ranges."""
+    family, table, name = _target()
+    _validate_target(family, table, name)
+    if set_type not in _SET_TYPES:
+        raise ValueError(f"invalid set type: {set_type!r}")
+    run(["nft", "add", "set", family, table, name,
+         "{ type " + set_type + "; flags interval; }"])
+    log.info("allowlist create set=%s/%s/%s type=%s", family, table, name, set_type)
 
 
 def add(ip: str) -> None:

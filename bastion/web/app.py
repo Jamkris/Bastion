@@ -262,6 +262,16 @@ async def action_allowlist_add(request: Request):
         return RedirectResponse(f"/view/allowlist?err={quote(str(e))}", status_code=303)
 
 
+@app.post("/action/allowlist/create", response_class=HTMLResponse)
+async def action_allowlist_create(request: Request):
+    form = await request.form()
+    try:
+        allowlist.create_set(form.get("set_type", "ipv4_addr"))
+        return RedirectResponse("/view/allowlist", status_code=303)
+    except (ValueError, CommandError) as e:
+        return RedirectResponse(f"/view/allowlist?err={quote(str(e))}", status_code=303)
+
+
 @app.post("/action/allowlist/remove", response_class=HTMLResponse)
 async def action_allowlist_remove(request: Request):
     form = await request.form()
@@ -373,6 +383,7 @@ def view_allowlist(request: Request):
         request, "views/allowlist.html",
         _ctx(request, _lang(request), active="allowlist", entries=entries,
              target=prefs.get("allowlist"), error=error,
+             missing=allowlist.set_missing(error),
              action_error=request.query_params.get("err", "")),
     )
 
