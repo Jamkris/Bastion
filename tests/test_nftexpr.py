@@ -79,3 +79,37 @@ def test_unknown_statement_falls_back_gracefully():
     expr = [{"weird_stmt": {"a": 1}}]
     out = render_expr(expr)
     assert "weird_stmt" in out  # does not raise, keeps information
+
+
+# ---------- real UFW / iptables-nft rules from server1 ----------
+def test_ufw_iifname_lo_accept():
+    expr = [
+        {"match": {"op": "==", "left": {"meta": {"key": "iifname"}}, "right": "lo"}},
+        {"counter": {"packets": 92, "bytes": 7604}},
+        {"accept": None},
+    ]
+    assert render_expr(expr) == "iifname lo counter accept"
+
+
+def test_ufw_xt_conntrack_names_the_match():
+    expr = [
+        {"xt": {"type": "match", "name": "conntrack"}},
+        {"counter": {"packets": 7860, "bytes": 994422}},
+        {"drop": None},
+    ]
+    assert render_expr(expr) == "conntrack counter drop"
+
+
+def test_ufw_l4proto_icmp_xt_accept():
+    expr = [
+        {"match": {"op": "==", "left": {"meta": {"key": "l4proto"}}, "right": "icmp"}},
+        {"xt": {"type": "match", "name": "icmp"}},
+        {"counter": {"packets": 362, "bytes": 33264}},
+        {"accept": None},
+    ]
+    assert render_expr(expr) == "l4proto icmp icmp counter accept"
+
+
+def test_docker_jump_chain():
+    expr = [{"counter": {"packets": 0, "bytes": 0}}, {"jump": {"target": "DOCKER-USER"}}]
+    assert render_expr(expr) == "counter jump DOCKER-USER"

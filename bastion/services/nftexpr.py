@@ -63,7 +63,10 @@ def _stmt(stmt: Any) -> str:
     if key == "reject":
         return "reject"
     if key == "xt":
-        return "[iptables rule]"
+        # iptables-nft compatibility match/target (e.g. UFW's `-m conntrack`).
+        # nft can't express it natively; surface the extension name.
+        name = val.get("name") if isinstance(val, dict) else None
+        return name or "xt"
     # Unknown statement: show its key (and value if scalar).
     if val in (None, {}, []):
         return key
