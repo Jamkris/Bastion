@@ -34,7 +34,8 @@ English · [한국어](#-한국어)
 
 **Alerting**
 - **ntfy push notifications** on a ban spike (configurable threshold + window),
-  with a one-click *Send test* button
+  on **new attacker IPs**, and on **open-port changes** — each independently
+  toggleable, with a one-click *Send test* button
 
 **Security & UX**
 - Single-password **login gate** (HMAC-signed session cookie)

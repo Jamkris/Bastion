@@ -124,6 +124,14 @@
             </div>
           </div>
           <p class="hint">{{ t("hint_ban_spike") }}</p>
+          <div class="field check">
+            <input type="checkbox" id="n_new_attacker" name="notify_new_attacker" {% if n.notify_new_attacker %}checked{% endif %}>
+            <label for="n_new_attacker">{{ t("lbl_notify_new_attacker") }}</label>
+          </div>
+          <div class="field check">
+            <input type="checkbox" id="n_port_change" name="notify_port_change" {% if n.notify_port_change %}checked{% endif %}>
+            <label for="n_port_change">{{ t("lbl_notify_port_change") }}</label>
+          </div>
           <div class="formactions">
             <button type="submit" class="btn btn-primary">{{ t("btn_save") }}</button>
             <button type="submit" class="btn" formaction="/settings/notifications/test">{{ t("btn_test_notify") }}</button>

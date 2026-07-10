@@ -9,6 +9,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Allowlist: **Persist to jail.local** option (ignoreip mode) — writes changes to
   the `[DEFAULT] ignoreip` line so they survive a fail2ban restart.
+- Notifications: alert on **new attacker IPs** and on **open-port changes**, each
+  independently toggleable in Settings (in addition to ban-spike alerts).
 
 ## [1.0.0] - 2026-07-10
 

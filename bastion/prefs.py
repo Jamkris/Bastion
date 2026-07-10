@@ -33,6 +33,9 @@ DEFAULTS: dict[str, dict[str, Any]] = {
         "priority": "default",
         "ban_spike_threshold": 5,
         "ban_spike_window_min": 10,
+        # Additional event alerts (each independently toggleable).
+        "notify_new_attacker": False,
+        "notify_port_change": False,
     },
     "allowlist": {
         # "ignoreip" -> manage fail2ban ignoreip (works with any firewall);
