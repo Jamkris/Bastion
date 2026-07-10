@@ -33,6 +33,16 @@ def test_healthz_public():
     assert c.get("/healthz").status_code == 200
 
 
+def test_api_stats_returns_flat_counters():
+    c = TestClient(app)
+    r = c.get("/api/stats")
+    assert r.status_code == 200
+    body = r.json()
+    for key in ("total_banned", "attackers", "open_ports", "jail_count"):
+        assert key in body
+        assert isinstance(body[key], int)
+
+
 def test_favicon_served():
     c = TestClient(app)
     r = c.get("/favicon.ico")

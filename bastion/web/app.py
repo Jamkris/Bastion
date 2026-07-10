@@ -125,6 +125,9 @@ async def auth_gate(request: Request, call_next):
         return await call_next(request)
     if auth.is_authenticated(request.cookies.get(auth.COOKIE_NAME), password):
         return await call_next(request)
+    # Header-only clients (Homepage/customapi, scripts) can use HTTP Basic auth.
+    if auth.verify_basic(request.headers.get("authorization"), password):
+        return await call_next(request)
     if path.startswith(("/api", "/panel", "/action")):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return RedirectResponse("/login", status_code=303)
@@ -477,6 +480,13 @@ def api_ports():
 def api_attackers():
     data, error = dashboard.top_attackers()
     return {"data": [a.__dict__ for a in (data or [])], "error": error}
+
+
+@app.get("/api/stats")
+def api_stats():
+    # Flat counters for dashboard widgets (e.g. Homepage customapi):
+    # {total_banned, jail_count, open_ports, attackers}.
+    return dashboard.summary()
 
 
 @app.get("/favicon.ico", include_in_schema=False)

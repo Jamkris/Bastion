@@ -120,6 +120,41 @@ export BASTION_GEOIP_DB=/path/to/dbip-country-lite.mmdb
 MaxMind GeoLite2-Country works too (same `.mmdb` format). IP geolocation data
 © [DB-IP](https://db-ip.com) (CC BY 4.0).
 
+## JSON API & dashboard widgets
+
+Bastion exposes a small JSON API (also behind auth). `GET /api/stats` returns flat
+counters handy for dashboards:
+
+```json
+{ "total_banned": 12, "jail_count": 2, "open_ports": 9, "attackers": 34 }
+```
+
+Also available: `/api/banned`, `/api/attackers`, `/api/ports` (each `{data, error}`).
+
+Header-only clients can't do the cookie login, so the API also accepts **HTTP
+Basic auth** — any username, the password being `BASTION_AUTH_PASSWORD`.
+
+Example [Homepage](https://gethomepage.dev) `customapi` widget showing three numbers:
+
+```yaml
+widget:
+  type: customapi
+  url: http://<bastion-host>:8009/api/stats
+  refreshInterval: 30000
+  username: homepage           # ignored; any value
+  password: <BASTION_AUTH_PASSWORD>   # omit both if auth is disabled
+  mappings:
+    - field: total_banned
+      label: Banned
+      format: number
+    - field: attackers
+      label: Attackers
+      format: number
+    - field: open_ports
+      label: Open ports
+      format: number
+```
+
 ## Demo mode
 
 Set `BASTION_DEMO=true` to serve sample data instead of running commands — handy
