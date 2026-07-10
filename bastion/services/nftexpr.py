@@ -14,8 +14,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-# meta keys that nft prints without the leading "meta".
-_BARE_META = {"iifname", "oifname", "iif", "oif", "mark", "l4proto", "nfproto"}
+# meta keys that nft prints without the leading "meta" (others show as "meta <k>").
+_BARE_META = {"iifname", "oifname", "iif", "oif"}
 _VERDICTS = {"accept", "drop", "reject", "return", "continue", "masquerade"}
 
 
@@ -30,7 +30,12 @@ def render_expr(expr: Any) -> str:
         items = expr
     if not isinstance(items, list):
         return str(items)
-    parts = [_stmt(s) for s in items]
+    parts = []
+    for s in items:
+        try:
+            parts.append(_stmt(s))
+        except Exception:  # a novel/malformed shape must never break the page
+            parts.append(json.dumps(s, ensure_ascii=False, separators=(",", ":")))
     return " ".join(p for p in parts if p)
 
 
@@ -55,7 +60,9 @@ def _stmt(stmt: Any) -> str:
         return f"{key} to {_dnat_target(val)}"
     if key == "mangle":
         # {"mangle": {"key": <left>, "value": <v>}} -> "<left> set <v>"
-        return f"{_value(val.get('key'))} set {_value(val.get('value'))}".strip()
+        if isinstance(val, dict):
+            return f"{_value(val.get('key'))} set {_value(val.get('value'))}".strip()
+        return f"mangle {_value(val)}".strip()
     if key == "limit":
         return "limit"
     if key == "queue":
@@ -79,7 +86,9 @@ def _match(val: Any) -> str:
     op = val.get("op", "==")
     left = _value(val.get("left"))
     right = _value(val.get("right"))
-    if op == "==":
+    # nft prints set membership implicitly (`ct state { ... }`), so "==" and "in"
+    # carry no visible operator.
+    if op in ("==", "in"):
         return f"{left} {right}".strip()
     return f"{left} {op} {right}".strip()
 

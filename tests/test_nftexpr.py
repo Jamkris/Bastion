@@ -41,11 +41,28 @@ def test_meta_iifname_bare():
 
 
 def test_ct_state():
+    # nft prints set membership implicitly — no visible "in" operator.
     expr = [
         {"match": {"op": "in", "left": {"ct": {"key": "state"}}, "right": {"set": ["established", "related"]}}},
         {"accept": None},
     ]
-    assert render_expr(expr) == "ct state in { established, related } accept"
+    assert render_expr(expr) == "ct state { established, related } accept"
+
+
+def test_meta_mark_keeps_meta_prefix():
+    # Only iifname/oifname/iif/oif are bare; other meta keys show "meta <k>".
+    expr = [{"match": {"op": "==", "left": {"meta": {"key": "mark"}}, "right": 1}}]
+    assert render_expr(expr) == "meta mark 1"
+
+
+def test_mangle_non_dict_does_not_raise():
+    assert render_expr([{"mangle": None}])  # must not raise; returns some string
+
+
+def test_malformed_nested_shape_falls_back():
+    # payload as a bare string (not the expected object) must not raise.
+    out = render_expr([{"match": {"op": "==", "left": {"payload": "weird"}, "right": 1}}])
+    assert isinstance(out, str) and out
 
 
 def test_jump_and_counter():
@@ -107,7 +124,7 @@ def test_ufw_l4proto_icmp_xt_accept():
         {"counter": {"packets": 362, "bytes": 33264}},
         {"accept": None},
     ]
-    assert render_expr(expr) == "l4proto icmp icmp counter accept"
+    assert render_expr(expr) == "meta l4proto icmp icmp counter accept"
 
 
 def test_docker_jump_chain():
