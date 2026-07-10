@@ -35,6 +35,9 @@ DEFAULTS: dict[str, dict[str, Any]] = {
         "ban_spike_window_min": 10,
     },
     "allowlist": {
+        # "ignoreip" -> manage fail2ban ignoreip (works with any firewall);
+        # "nftset"   -> manage a dedicated nftables set.
+        "mode": "ignoreip",
         "family": "inet",
         "table": "filter",
         "set": "bastion_allow",

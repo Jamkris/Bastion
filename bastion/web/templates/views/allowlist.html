@@ -3,75 +3,135 @@
 {% block content %}
   <section class="panel full" data-panel="allowlist-view">
     <h2>
-      <span>{{ t("panel_allowlist") }} <span class="badge num">{{ entries|length }}</span></span>
-      <span class="muted"><code>{{ target.family }} {{ target.table }} {{ target.set }}</code></span>
+      <span>{{ t("panel_allowlist") }}</span>
+      {% if mode == 'nftset' %}
+        <span class="muted"><code>{{ target.family }} {{ target.table }} {{ target.set }}</code></span>
+      {% else %}
+        <span class="muted"><code>fail2ban ignoreip</code></span>
+      {% endif %}
     </h2>
 
     {% if action_error %}<div class="banner-err">{{ action_error }}</div>{% endif %}
 
-    <div style="padding:8px 16px" class="muted">{{ t("allowlist_intro") }}</div>
+    {% if mode == 'nftset' %}
+      {# ---------- nftables set mode ---------- #}
+      <div style="padding:8px 16px" class="muted">{{ t("allowlist_intro") }}</div>
 
-    {% if error %}
-      {% if missing %}
-        <div class="setup">
-          <h3>{{ t("allowlist_setup_title") }}</h3>
-          <p class="muted">{{ t("allowlist_setup_intro") }}</p>
-          <ol>
-            <li>{{ t("allowlist_step_find") }}
-              <pre>nft list tables</pre>
-            </li>
-            <li>{{ t("allowlist_step_configure") }}</li>
-            <li>{{ t("allowlist_step_create") }}
-              <pre>nft add set {{ target.family }} {{ target.table }} {{ target.set }} { type ipv4_addr\; flags interval\; }</pre>
-              <form method="post" action="/action/allowlist/create" style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <button class="btn btn-ban" type="submit">{{ t("allowlist_create_set") }}</button>
-                <span class="muted" style="font-size:12px">{{ t("allowlist_create_note") }}</span>
-              </form>
-            </li>
-            <li>{{ t("allowlist_step_rule") }}
-              <pre>nft add rule {{ target.family }} {{ target.table }} input ip saddr @{{ target.set }} accept</pre>
-            </li>
-          </ol>
-          <div class="err" style="margin-top:4px">{{ error }}</div>
-        </div>
+      {% if error %}
+        {% if missing %}
+          <div class="setup">
+            <h3>{{ t("allowlist_setup_title") }}</h3>
+            <p class="muted">{{ t("allowlist_setup_intro") }}</p>
+            <ol>
+              <li>{{ t("allowlist_step_find") }}
+                <pre>nft list tables</pre>
+              </li>
+              <li>{{ t("allowlist_step_configure") }}</li>
+              <li>{{ t("allowlist_step_create") }}
+                <pre>nft add set {{ target.family }} {{ target.table }} {{ target.set }} { type ipv4_addr\; flags interval\; }</pre>
+                <form method="post" action="/action/allowlist/create" style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <button class="btn btn-ban" type="submit">{{ t("allowlist_create_set") }}</button>
+                  <span class="muted" style="font-size:12px">{{ t("allowlist_create_note") }}</span>
+                </form>
+              </li>
+              <li>{{ t("allowlist_step_rule") }}
+                <pre>nft add rule {{ target.family }} {{ target.table }} input ip saddr @{{ target.set }} accept</pre>
+              </li>
+            </ol>
+            <div class="err" style="margin-top:4px">{{ error }}</div>
+          </div>
+        {% else %}
+          <div class="err">{{ error }}</div>
+        {% endif %}
       {% else %}
-        <div class="err">{{ error }}</div>
-      {% endif %}
-    {% else %}
-      <form class="actbar" method="post" action="/action/allowlist/add">
-        <span class="lbl">{{ t("add_ip") }}:</span>
-        <input name="ip" type="text" placeholder="{{ t('allowlist_placeholder') }}" style="min-width:240px" required>
-        <button class="btn btn-ban" type="submit">{{ t("add_ip") }}</button>
-      </form>
+        <form class="actbar" method="post" action="/action/allowlist/add">
+          <span class="lbl">{{ t("add_ip") }}:</span>
+          <input name="ip" type="text" placeholder="{{ t('allowlist_placeholder') }}" style="min-width:240px" required>
+          <button class="btn btn-ban" type="submit">{{ t("add_ip") }}</button>
+        </form>
 
-      <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
-      <div class="body">
-        <table>
-          <thead><tr>
-            <th data-sort="num">{{ t("th_rank") }}</th>
-            <th data-sort="text">{{ t("th_entry") }}</th>
-            <th>{{ t("th_action") }}</th>
-          </tr></thead>
-          <tbody>
-            {% for e in entries %}
-              <tr>
-                <td class="num muted">{{ loop.index }}</td>
-                <td><code>{{ e }}</code></td>
-                <td>
-                  <button class="btn btn-danger"
-                          hx-post="/action/allowlist/remove"
-                          hx-vals='{"ip": "{{ e }}"}'
-                          hx-target="closest tr" hx-swap="outerHTML"
-                          hx-confirm="{{ t('confirm_remove_allow') }}">{{ t("remove") }}</button>
-                </td>
-              </tr>
-            {% endfor %}
-            {% if not entries %}
-              <tr><td colspan="3" class="muted" style="padding:16px">{{ t("allowlist_empty") }}</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
+        <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
+        <div class="body">
+          <table>
+            <thead><tr>
+              <th data-sort="num">{{ t("th_rank") }}</th>
+              <th data-sort="text">{{ t("th_entry") }}</th>
+              <th>{{ t("th_action") }}</th>
+            </tr></thead>
+            <tbody>
+              {% for e in entries %}
+                <tr>
+                  <td class="num muted">{{ loop.index }}</td>
+                  <td><code>{{ e }}</code></td>
+                  <td>
+                    <button class="btn btn-danger"
+                            hx-post="/action/allowlist/remove"
+                            hx-vals='{"ip": "{{ e }}"}'
+                            hx-target="closest tr" hx-swap="outerHTML"
+                            hx-confirm="{{ t('confirm_remove_allow') }}">{{ t("remove") }}</button>
+                  </td>
+                </tr>
+              {% endfor %}
+              {% if not entries %}
+                <tr><td colspan="3" class="muted" style="padding:16px">{{ t("allowlist_empty") }}</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+
+    {% else %}
+      {# ---------- fail2ban ignoreip mode ---------- #}
+      <div style="padding:8px 16px" class="muted">{{ t("allowlist_ignoreip_intro") }}</div>
+
+      {% if error %}
+        <div class="err">{{ error }}</div>
+      {% else %}
+        {% if jails %}
+        <form class="actbar" method="post" action="/action/ignoreip/add">
+          <span class="lbl">{{ t("add_ip") }}:</span>
+          <select name="jail">
+            {% for j in jails %}<option value="{{ j }}">{{ j }}</option>{% endfor %}
+          </select>
+          <input name="ip" type="text" placeholder="{{ t('allowlist_placeholder') }}" style="min-width:220px" required>
+          <button class="btn btn-ban" type="submit">{{ t("add_ip") }}</button>
+        </form>
+        {% endif %}
+
+        <div class="filterbar"><input class="filter" type="search" placeholder="{{ t('filter') }}"></div>
+        <div class="body">
+          <table>
+            <thead><tr>
+              <th data-sort="text">{{ t("th_jail") }}</th>
+              <th data-sort="text">{{ t("th_entry") }}</th>
+              <th>{{ t("th_action") }}</th>
+            </tr></thead>
+            <tbody>
+              {% set ns = namespace(count=0) %}
+              {% for g in groups %}
+                {% for e in g.entries %}
+                  {% set ns.count = ns.count + 1 %}
+                  <tr>
+                    <td><code>{{ g.jail }}</code></td>
+                    <td><code>{{ e }}</code></td>
+                    <td>
+                      <button class="btn btn-danger"
+                              hx-post="/action/ignoreip/remove"
+                              hx-vals='{"jail": "{{ g.jail }}", "ip": "{{ e }}"}'
+                              hx-target="closest tr" hx-swap="outerHTML"
+                              hx-confirm="{{ t('confirm_remove_allow') }}">{{ t("remove") }}</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+              {% if ns.count == 0 %}
+                <tr><td colspan="3" class="muted" style="padding:16px">{{ t("allowlist_empty") }}</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+        <div class="muted" style="padding:10px 16px;font-size:12px">{{ t("allowlist_ignoreip_note") }}</div>
+      {% endif %}
     {% endif %}
   </section>
 {% endblock %}

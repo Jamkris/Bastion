@@ -85,9 +85,13 @@ take effect immediately.
   optional access token, and tune the ban-spike threshold and window. Use *Send
   test* to verify delivery. A background poller checks fail2ban every 60s and
   pushes one alert when the threshold is crossed within the window.
-- **Allowlist (nftables)** — choose the `family` / `table` / `set` that holds your
-  trusted IPs. The set must already exist in your nftables config; Bastion only
-  adds and removes elements. Manage entries on the **✅ Allowlist** page.
+- **Allowlist** — two modes:
+  - **fail2ban ignoreip** (default) — trusted IPs fail2ban will never ban, managed
+    per jail over the fail2ban socket. Works with any firewall (UFW/iptables/nftables).
+    Live changes are not written back to `jail.local` — put permanent entries there.
+  - **nftables set** — manage IPs in a dedicated nftables set (`family` / `table` /
+    `set`). The set must exist in your ruleset (a first-run guide + *Create set*
+    button helps). Manage entries on the **✅ Allowlist** page either way.
 - **Login security** — max failed attempts and the lockout window for per-IP login
   rate limiting.
 
@@ -189,8 +193,12 @@ fail2ban 소켓과 `/var/log` 마운트가 필요합니다(compose 파일에 포
 
 - **알림(ntfy)**: ntfy 서버 주소·토픽·토큰과 차단 급증 임계값/기간을 설정합니다.
   백그라운드 폴러가 60초마다 fail2ban을 확인해 임계값 초과 시 한 번 알립니다.
-- **허용 목록(nftables)**: 신뢰 IP를 담는 `family` / `table` / `set`을 지정합니다.
-  셋은 nftables 설정에 이미 존재해야 하며, Bastion은 원소만 추가·삭제합니다.
+- **허용 목록**: 두 가지 방식
+  - **fail2ban ignoreip**(기본): fail2ban이 절대 차단하지 않는 신뢰 IP를 jail별로 관리.
+    UFW/iptables/nftables 어떤 방화벽이든 동작. 변경은 즉시 적용되지만 `jail.local`에는
+    저장되지 않으니 영구 항목은 거기에 추가하세요.
+  - **nftables 셋**: 전용 nftables 셋(`family`/`table`/`set`)의 IP를 관리. 셋은 ruleset에
+    이미 존재해야 하며(없으면 안내 + *셋 생성* 버튼 제공).
 - **로그인 보안**: 최대 실패 횟수와 잠금 기간을 설정합니다.
 
 ### 인증

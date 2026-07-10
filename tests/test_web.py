@@ -102,11 +102,22 @@ def test_login_locks_out_after_repeated_failures(monkeypatch):
     assert "Too many attempts" in r.text
 
 
-def test_allowlist_page_renders():
-    # nft is absent in CI, so the list surfaces a "not found" error, which the
-    # page turns into the first-run setup guide (create-set form).
+def test_allowlist_ignoreip_mode_default():
+    # Default mode is fail2ban ignoreip; the page renders even without fail2ban.
     c = TestClient(app)
     r = c.get("/view/allowlist")
     assert r.status_code == 200
     assert "Allowlist" in r.text
+    assert "fail2ban ignoreip" in r.text
+
+
+def test_allowlist_nftset_mode_shows_setup(monkeypatch):
+    # In nftset mode with nft absent, the page shows the create-set setup guide.
+    monkeypatch.setattr(
+        webapp.prefs, "get",
+        lambda section: {"mode": "nftset", "family": "inet", "table": "filter", "set": "bastion_allow"},
+    )
+    c = TestClient(app)
+    r = c.get("/view/allowlist")
+    assert r.status_code == 200
     assert 'action="/action/allowlist/create"' in r.text

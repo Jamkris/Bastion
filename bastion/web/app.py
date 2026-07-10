@@ -25,7 +25,7 @@ from bastion import __version__, auth, i18n, prefs
 from bastion.config import settings
 from bastion.ratelimit import RateLimiter
 from bastion.runner import CommandError
-from bastion.services import actions, allowlist, dashboard, geoip, notify
+from bastion.services import actions, allowlist, dashboard, geoip, ignoreip, notify
 from bastion.util import flag_emoji, port_scope
 
 log = logging.getLogger("bastion")
@@ -284,6 +284,28 @@ async def action_allowlist_remove(request: Request):
         )
 
 
+@app.post("/action/ignoreip/add", response_class=HTMLResponse)
+async def action_ignoreip_add(request: Request):
+    form = await request.form()
+    try:
+        ignoreip.add(form.get("jail", ""), form.get("ip", ""))
+        return RedirectResponse("/view/allowlist", status_code=303)
+    except (ValueError, CommandError) as e:
+        return RedirectResponse(f"/view/allowlist?err={quote(str(e))}", status_code=303)
+
+
+@app.post("/action/ignoreip/remove", response_class=HTMLResponse)
+async def action_ignoreip_remove(request: Request):
+    form = await request.form()
+    try:
+        ignoreip.remove(form.get("jail", ""), form.get("ip", ""))
+        return HTMLResponse("")  # HTMX removes the row on success
+    except (ValueError, CommandError) as e:
+        return HTMLResponse(
+            f'<tr><td colspan="3" class="err">{html.escape(str(e))}</td></tr>'
+        )
+
+
 @app.post("/action/unban", response_class=HTMLResponse)
 async def action_unban(request: Request):
     form = await request.form()
@@ -378,14 +400,19 @@ def view_ports(request: Request):
 
 @app.get("/view/allowlist", response_class=HTMLResponse)
 def view_allowlist(request: Request):
-    entries, error = allowlist.list_entries()
-    return templates.TemplateResponse(
-        request, "views/allowlist.html",
-        _ctx(request, _lang(request), active="allowlist", entries=entries,
-             target=prefs.get("allowlist"), error=error,
-             missing=allowlist.set_missing(error),
-             action_error=request.query_params.get("err", "")),
-    )
+    cfg = prefs.get("allowlist")
+    mode = cfg.get("mode", "ignoreip")
+    common = dict(active="allowlist", mode=mode, target=cfg,
+                  action_error=request.query_params.get("err", ""))
+    if mode == "nftset":
+        entries, error = allowlist.list_entries()
+        ctx = _ctx(request, _lang(request), entries=entries, error=error,
+                   missing=allowlist.set_missing(error), **common)
+    else:
+        groups, error = ignoreip.list_all()
+        jails = [g["jail"] for g in groups]
+        ctx = _ctx(request, _lang(request), groups=groups, jails=jails, error=error, **common)
+    return templates.TemplateResponse(request, "views/allowlist.html", ctx)
 
 
 @app.get("/view/firewall", response_class=HTMLResponse)

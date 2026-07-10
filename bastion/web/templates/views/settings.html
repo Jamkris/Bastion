@@ -136,6 +136,13 @@
         <h2>{{ t("sec_allowlist") }}</h2>
         <form class="body" method="post" action="/settings/allowlist">
           <p class="hint">{{ t("sec_allowlist_hint") }}</p>
+          <div class="field">
+            <label for="a_mode">{{ t("allowlist_mode") }}</label>
+            <select id="a_mode" name="mode">
+              <option value="ignoreip" {% if a.mode == 'ignoreip' %}selected{% endif %}>{{ t("mode_ignoreip") }}</option>
+              <option value="nftset" {% if a.mode == 'nftset' %}selected{% endif %}>{{ t("mode_nftset") }}</option>
+            </select>
+          </div>
           <div class="row2">
             <div class="field">
               <label for="a_family">{{ t("lbl_family") }}</label>
