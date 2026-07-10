@@ -1,10 +1,20 @@
 # 🛡 Bastion
 
+[![CI](https://github.com/Jamkris/Bastion/actions/workflows/ci.yml/badge.svg)](https://github.com/Jamkris/Bastion/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+
 A lightweight **fail2ban + nftables security dashboard** for a single self-hosted
 server. See your firewall state, ban and unban IPs, manage an allowlist, and get
 push alerts on attack spikes — all from the browser, in one small container.
 
 English · [한국어](#-한국어)
+
+<!-- Screenshots: drop PNGs into docs/ and reference them here, e.g.
+![Dashboard](docs/dashboard.png)
+![Settings](docs/settings.png)
+-->
+
 
 ---
 
