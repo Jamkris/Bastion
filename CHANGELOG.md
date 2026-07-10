@@ -20,6 +20,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - Firewall page now renders rules in **readable nft syntax** (e.g. `tcp dport 22
   accept`) instead of raw JSON; the original JSON is available on hover.
+- Firewall rules are **grouped by table → chain** in collapsible sections, with a
+  filter that auto-opens matching groups (much easier on large rulesets).
 
 ## [1.0.0] - 2026-07-10
 

@@ -152,6 +152,26 @@ def test_multiuser_api_basic_auth(one_user):
     assert c.get("/api/stats", auth=(user, pw)).status_code == 200
 
 
+def test_firewall_grouped_view(monkeypatch):
+    from bastion.models import FirewallRule, FirewallRuleset
+
+    rs = FirewallRuleset(
+        chains=(),
+        rules=(
+            FirewallRule("ip", "filter", "INPUT", 1, '[{"accept": null}]'),
+            FirewallRule("ip", "nat", "POSTROUTING", 2, '[{"masquerade": null}]'),
+        ),
+        sets=(),
+    )
+    monkeypatch.setattr(webapp.dashboard, "firewall_ruleset", lambda: (rs, None))
+    c = TestClient(app)
+    r = c.get("/view/firewall")
+    assert r.status_code == 200
+    assert 'class="fw-table"' in r.text
+    assert "ip filter" in r.text and "ip nat" in r.text
+    assert "accept" in r.text  # rendered readable expression
+
+
 def test_dashboard_has_profile_menu():
     c = TestClient(app)
     r = c.get("/")

@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from bastion import __version__, auth, history, i18n, prefs, secretkey, users
+from bastion import __version__, auth, fwview, history, i18n, prefs, secretkey, users
 from bastion.config import settings
 from bastion.ratelimit import RateLimiter
 from bastion.runner import CommandError
@@ -567,9 +567,11 @@ def view_allowlist(request: Request):
 @app.get("/view/firewall", response_class=HTMLResponse)
 def view_firewall(request: Request):
     data, error = dashboard.firewall_ruleset()
+    rule_groups = fwview.group_rules_by_table(data.rules) if data else []
     return templates.TemplateResponse(
         request, "views/firewall.html",
-        _ctx(request, _lang(request), active="firewall", ruleset=data, error=error),
+        _ctx(request, _lang(request), active="firewall", ruleset=data,
+             rule_groups=rule_groups, error=error),
     )
 
 
