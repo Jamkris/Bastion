@@ -55,9 +55,10 @@ if not settings.auth_password:
     log.warning("BASTION_AUTH_PASSWORD is not set — the dashboard is OPEN (no login).")
 
 
-# ---------- Ban-spike alerting (background poller) ----------
-# Poll fail2ban periodically; when a burst of new bans crosses the configured
-# threshold within the window, push one ntfy alert (rate-limited by the window).
+# ---------- Intrusion alerting (background poller) ----------
+# Poll periodically and push ntfy alerts for: a burst of new bans (rate-limited
+# by the window), newly-seen attacker IPs, and open-port changes. Each event
+# type is independently toggleable in Settings.
 POLL_INTERVAL_SEC = 60
 
 _seen_bans: set[tuple[str, str]] = set()
@@ -65,9 +66,15 @@ _ban_events: list[float] = []
 _last_alert_at = 0.0
 _primed = False
 
+_seen_attackers: set[str] = set()
+_attackers_primed = False
+
+_seen_ports: set[tuple[int, str]] = set()
+_ports_primed = False
+
 
 def _poll_bans_once(now: float) -> None:
-    """One alerting pass. Pure-ish: time is injected so it can be tested."""
+    """Ban-spike pass. Pure-ish: time is injected so it can be tested."""
     global _seen_bans, _ban_events, _last_alert_at, _primed
     n = prefs.get("notifications")
     if not n["enabled"]:
@@ -108,13 +115,78 @@ def _poll_bans_once(now: float) -> None:
         _ban_events = []
 
 
+def _poll_new_attackers_once() -> None:
+    """Alert once for attacker IPs that are new since the last pass."""
+    global _seen_attackers, _attackers_primed
+    n = prefs.get("notifications")
+    if not n["enabled"] or not n.get("notify_new_attacker"):
+        return
+    data, error = dashboard.top_attackers()
+    if error:
+        return
+    current = {a.ip for a in (data or [])}
+    if not _attackers_primed:
+        _seen_attackers = current
+        _attackers_primed = True
+        return
+    new = current - _seen_attackers
+    _seen_attackers = current
+    if new:
+        sample = ", ".join(sorted(new)[:5])
+        notify.send(
+            f"Bastion: new attacker(s) ({len(new)})",
+            f"New attacker IP(s): {sample}",
+            tags="warning",
+            priority=n["priority"],
+            n=n,
+        )
+
+
+def _poll_port_changes_once() -> None:
+    """Alert when the set of listening ports changes (opened / closed)."""
+    global _seen_ports, _ports_primed
+    n = prefs.get("notifications")
+    if not n["enabled"] or not n.get("notify_port_change"):
+        return
+    data, error = dashboard.open_ports()
+    if error:
+        return
+    current = {(p.port, p.proto) for p in (data or [])}
+    if not _ports_primed:
+        _seen_ports = current
+        _ports_primed = True
+        return
+    opened = current - _seen_ports
+    closed = _seen_ports - current
+    _seen_ports = current
+    if opened or closed:
+        parts = []
+        if opened:
+            parts.append("opened: " + ", ".join(f"{p}/{pr}" for p, pr in sorted(opened)))
+        if closed:
+            parts.append("closed: " + ", ".join(f"{p}/{pr}" for p, pr in sorted(closed)))
+        notify.send(
+            "Bastion: port change",
+            "; ".join(parts),
+            tags="electric_plug",
+            priority=n["priority"],
+            n=n,
+        )
+
+
+def _poll_once(now: float) -> None:
+    _poll_bans_once(now)
+    _poll_new_attackers_once()
+    _poll_port_changes_once()
+
+
 async def _alert_loop() -> None:
     while True:
         await asyncio.sleep(POLL_INTERVAL_SEC)
         try:
-            _poll_bans_once(time.time())
+            _poll_once(time.time())
         except Exception as e:  # never let the loop die
-            log.warning("ban-spike poll failed: %s", e)
+            log.warning("alert poll failed: %s", e)
 
 
 @app.middleware("http")
