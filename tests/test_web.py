@@ -122,10 +122,16 @@ def test_allowlist_ignoreip_mode_default():
 
 
 def test_allowlist_nftset_mode_shows_setup(monkeypatch):
-    # In nftset mode with nft absent, the page shows the create-set setup guide.
+    # In nftset mode, a "set not found" error must render the create-set setup
+    # guide. Force both prefs and the lookup so the test does not depend on
+    # whether/how `nft` fails in the CI environment.
     monkeypatch.setattr(
         webapp.prefs, "get",
         lambda section: {"mode": "nftset", "family": "inet", "table": "filter", "set": "bastion_allow"},
+    )
+    monkeypatch.setattr(
+        webapp.allowlist, "list_entries",
+        lambda: ([], "Error: No such file or directory"),
     )
     c = TestClient(app)
     r = c.get("/view/allowlist")
