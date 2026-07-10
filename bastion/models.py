@@ -21,6 +21,7 @@ class BannedIP:
     ip: str
     jail: str
     country: str | None = None
+    count: int = 0  # failed attempts seen in the auth log (0 if unknown)
 
 
 @dataclass(frozen=True)
