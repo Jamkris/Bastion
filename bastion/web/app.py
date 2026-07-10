@@ -26,6 +26,7 @@ from bastion.config import settings
 from bastion.ratelimit import RateLimiter
 from bastion.runner import CommandError
 from bastion.services import actions, allowlist, dashboard, geoip, ignoreip, notify
+from bastion.services.nftexpr import render_expr
 from bastion.util import flag_emoji, port_scope, sparkline_points
 
 log = logging.getLogger("bastion")
@@ -36,6 +37,7 @@ templates = Jinja2Templates(directory=_TEMPLATE_DIR)
 templates.env.globals["flag"] = flag_emoji
 templates.env.globals["scope"] = port_scope
 templates.env.globals["sparkline"] = sparkline_points
+templates.env.globals["nft_expr"] = render_expr
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
