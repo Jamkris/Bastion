@@ -13,6 +13,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   independently toggleable in Settings (in addition to ban-spike alerts).
 - Home **trend sparklines** for banned IPs and attackers, backed by a capped
   time-series recorded by the poller. New `GET /api/history` endpoint.
+- **Multi-user login** — named accounts with PBKDF2-hashed passwords, managed in
+  Settings → Users, with signed session cookies. Falls back to the single shared
+  password when no users exist; HTTP Basic auth works with user credentials.
 
 ### Changed
 - Firewall page now renders rules in **readable nft syntax** (e.g. `tcp dport 22

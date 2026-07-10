@@ -111,14 +111,19 @@ take effect immediately.
 
 ## Authentication
 
-Set `BASTION_AUTH_PASSWORD` to require a login; the whole dashboard is then gated
-behind a single-password sign-in (session stored in an HMAC-signed cookie).
-Repeated failures from one IP are locked out (see *Login security* above). Leave
-the password empty to run open (dev/demo) — a warning is logged on startup.
-`/healthz`, `/login` and static assets stay public.
+Three modes, in order of precedence:
 
-This is a deliberately minimal gate; keep the app behind HTTPS. A full
-multi-user model can be layered on later without changing call sites.
+1. **Multi-user** — add accounts under **Settings → Users**; login is then
+   username + password (PBKDF2-hashed, stored in `data/users.json`; sessions are
+   signed with a key at `data/.secret` or `BASTION_SECRET_KEY`).
+2. **Single password** — with no users but `BASTION_AUTH_PASSWORD` set, the whole
+   dashboard is gated behind one shared password (HMAC-signed cookie).
+3. **Open** — neither configured; a warning is logged on startup.
+
+Repeated failures from one IP are locked out (see *Login security* above).
+`/healthz`, `/login` and static assets stay public. Header-only clients can use
+HTTP Basic auth (username + password in multi-user mode, or any username + the
+shared password otherwise). Keep the app behind HTTPS regardless.
 
 ## GeoIP (country flags)
 

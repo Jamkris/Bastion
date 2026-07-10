@@ -1,8 +1,11 @@
 import os
+import tempfile
 
 # Isolate the suite from a developer's local .env (which may enable auth or
-# demo mode). This must run before any `bastion.*` import triggers config load.
+# demo mode) and from the real ./data dir (prefs, users, history, secret key).
+# This must run before any `bastion.*` import triggers config load.
 os.environ["BASTION_NO_DOTENV"] = "1"
+os.environ["BASTION_DATA_DIR"] = tempfile.mkdtemp(prefix="bastion-test-")
 for _k in ("BASTION_AUTH_PASSWORD", "BASTION_DEMO", "BASTION_SUDO", "BASTION_JAILS"):
     os.environ.pop(_k, None)
 

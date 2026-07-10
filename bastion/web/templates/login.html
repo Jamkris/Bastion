@@ -37,7 +37,8 @@
     <h1>🛡 Bastion</h1>
     <p>{{ t("login_title") }}</p>
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
-    <input type="password" name="password" placeholder="{{ t('password') }}" autofocus required>
+    {% if multi_user %}<input type="text" name="username" placeholder="{{ t('username') }}" autocomplete="username" autofocus required>{% endif %}
+    <input type="password" name="password" placeholder="{{ t('password') }}" autocomplete="current-password" {% if not multi_user %}autofocus{% endif %} required>
     <button type="submit">{{ t("sign_in") }}</button>
   </form>
 </body>
